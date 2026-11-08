@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5f7f5" />
+    <meta name="description" content="Campus AR is an interactive junction guidance prototype for scooter riders and drivers." />
+    <title>Campus AR — Junction guidance</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="workspace">
+      <aside class="sidebar" aria-label="Prototype controls">
+        <div class="brand"><span class="brand-mark">✳</span><span>campus<span class="brand-light">AR</span></span></div>
+        <div class="side-label">INTERACTIVE PROTOTYPE</div>
+        <div class="sidebar-intro"><h1>Safer turns start with a clearer view.</h1><p>Explore how lane level guidance and live hazard cues support a journey through a campus junction.</p></div>
+        <div class="side-section"><div class="section-title">CHOOSE A JOURNEY</div><button class="persona active" data-persona="rider" aria-pressed="true"><span class="persona-icon">♢</span><span><strong>Scooter rider</strong><small>John · Continue straight</small></span><span class="persona-check">✓</span></button><button class="persona" data-persona="driver" aria-pressed="false"><span class="persona-icon car-icon">▰</span><span><strong>Car driver</strong><small>Mary · Turn right</small></span><span class="persona-check">✓</span></button></div>
+        <div class="side-section stages-section"><div class="section-title">JOURNEY STAGES</div><div id="stage-list" class="stage-list"></div></div>
+        <div class="sidebar-footer"><span class="live-dot"></span> Concept demo <span class="footer-divider">·</span> CS 6750</div>
+      </aside>
+
+      <main class="main">
+        <header class="desktop-header"><div><div class="eyebrow">CAMPUS MOBILITY / PROTOTYPE</div><h2 id="desktop-title">Junction guidance</h2></div><div class="header-status"><span class="live-dot"></span> Simulation active</div></header>
+        <div class="content-grid">
+          <section class="phone-wrap" aria-label="Interactive app preview"><div class="phone-shadow"></div><div class="phone">
+            <div class="phone-status"><span>9:41</span><div class="status-icons"><span>▰▰▰</span><span>◕</span><span>▰</span></div></div>
+            <div class="app-top"><button class="icon-button" id="back-button" aria-label="Previous stage">←</button><button class="app-top-title" id="mode-button" aria-label="Change journey" aria-expanded="false"><strong id="app-name">Campus AR ⌄</strong><small id="app-subtitle">Scooter journey</small></button><button class="icon-button sound-button" id="sound-button" aria-label="Toggle audio guidance" aria-pressed="true">◖))</button></div><div class="mode-menu" id="mode-menu" hidden><button data-menu-persona="rider">◇ <span>Scooter rider<small>John · Continue straight</small></span></button><button data-menu-persona="driver">▰ <span>Car driver<small>Mary · Turn right</small></span></button></div>
+            <div class="scene" id="scene"><div id="scene-art" class="scene-art"></div><div class="scene-shade"></div><div class="scene-header"><span class="scene-pill"><span class="live-dot"></span><span id="view-label">MAP VIEW</span></span><span class="scene-step" id="scene-step">01 / 03</span></div><div id="scene-overlays" class="scene-overlays"></div></div>
+            <div class="bottom-sheet"><div class="sheet-handle"></div><div class="sheet-topline"><span class="route-label" id="route-label">NEXT MANEUVER</span><span class="distance" id="distance">30 m ahead</span></div><div class="maneuver"><div class="maneuver-icon" id="maneuver-icon">↑</div><div><h3 id="maneuver-title">Continue straight</h3><p id="maneuver-detail">Approaching the campus junction</p></div></div><div class="advisory" id="advisory"><span class="advisory-icon">✦</span><span id="advisory-text">Stop to view the AR guidance and potential traffic at this junction.</span></div><div class="sheet-actions"><button class="primary-button" id="primary-button">Open AR <span>↗</span></button><button class="next-button" id="next-button" aria-label="Next stage">→</button></div><div class="sheet-footer"><span><i class="footer-indicator"></i> <span id="footer-status">Route active</span></span><span id="footer-audio">Audio on</span></div></div>
+            <div class="home-indicator"></div>
+          </div></section>
+          <aside class="details"><div class="details-heading"><span class="eyebrow">SCENARIO NOTES</span><span class="details-count" id="details-count">01 / 03</span></div><h2 id="details-title">Approach the junction</h2><p id="details-description">John approaches a junction. The route is shown at lane level from a top down view.</p><div class="insight-card"><div class="insight-icon">⌖</div><div><strong id="insight-title">What to notice</strong><p id="insight-copy">The route follows the rider's lane and shows the exact crossing ahead.</p></div></div><div class="legend"><div class="section-title">VISUAL KEY</div><div><span class="legend-swatch route-swatch"></span> Guided route</div><div><span class="legend-swatch danger-swatch"></span> Conflict zone</div><div><span class="legend-swatch line-swatch"></span> Road marking</div></div><div class="keyboard-hint">Use <kbd>←</kbd> <kbd>→</kbd> to move between stages</div></aside>
+        </div>
+      </main>
+    </div>
+    <script src="./script.js"></script>
+  </body>
+</html>
