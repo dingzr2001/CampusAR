@@ -1,8 +1,8 @@
 const journeys = {
   rider: [
-    { stage: 'Approach the junction', detail: 'John approaches a junction. The route is shown at lane level from a top down view.', insight: 'The route follows the rider’s lane and shows the exact crossing ahead.', view: 'MAP VIEW', route: 'NEXT MANEUVER', distance: '30 m ahead', icon: '↑', title: 'Continue straight', subtitle: 'Approaching the campus junction', advisory: 'Stop to view the AR guidance and potential traffic at this junction.', advisoryType: '', action: 'Open AR', status: 'Route active', art: 'map', overlays: [] },
-    { stage: 'Wait at the stop line', detail: 'At the red light, John opens AR. The live view marks the stop line, lane boundaries, and the traffic signal.', insight: 'The stop line and red signal are placed directly over the road view so John can wait in the right position.', view: 'AR VIEW · LIVE', route: 'TRAFFIC SIGNAL', distance: '24 s remaining', icon: '●', title: 'Wait behind the line', subtitle: 'Red light · remain stopped', advisory: 'Stay behind the highlighted stop line until the signal changes.', advisoryType: 'alert', action: 'Signal turns green', status: 'Red signal', art: 'riderWait', overlays: [{text:'RED LIGHT',small:'24 s remaining',cls:'warn right',top:'18%'},{text:'Stop line',cls:'center',top:'72%',left:'50%'},{text:'Bike lane',cls:'left',top:'57%'}] },
-    { stage: 'Cross with care', detail: 'When the light turns green, AR marks the path forward and highlights areas where turning traffic may cross it.', insight: 'A hatched zone draws attention to possible conflicts with turning vehicles while the route stays visible.', view: 'AR VIEW · LIVE', route: 'PROCEED WITH CAUTION', distance: '17 s remaining', icon: '↑', title: 'Continue straight', subtitle: 'Watch for turning traffic', advisory: 'Caution: turning traffic may cross your path. Check the highlighted conflict zone.', advisoryType: 'danger', action: 'Restart journey', status: 'Green signal', art: 'riderGo', overlays: [{text:'GREEN LIGHT',small:'17 s remaining',cls:'green right',top:'17%'},{text:'Conflict zone',small:'Turning traffic crosses here',cls:'danger right',top:'53%'}] }
+    { stage: 'Approach the junction', detail: 'John approaches a junction. The route is shown at lane level from a top down view.', insight: 'The bike lane starts on the near right and crosses diagonally to the far-left side after the junction.', view: 'MAP VIEW', route: 'NEXT MANEUVER', distance: '30 m ahead', icon: '↑', title: 'Continue straight', subtitle: 'Approaching the campus junction', advisory: 'Stop to view the AR guidance and potential traffic at this junction.', advisoryType: '', action: 'Open AR', status: 'Route active', art: 'map', overlays: [] },
+    { stage: 'Wait at the stop line', detail: 'At the red light, John opens AR. The live view marks the stop line, lane boundaries, and the traffic signal.', insight: 'John waits in the right-side bike lane. The dashed diagonal connection leads to the bike lane beyond the junction.', view: 'AR VIEW · LIVE', route: 'TRAFFIC SIGNAL', distance: '24 s remaining', icon: '●', title: 'Wait behind the line', subtitle: 'Red light · remain stopped', advisory: 'Stay behind the highlighted stop line until the signal changes.', advisoryType: 'alert', action: 'Signal turns green', status: 'Red signal', art: 'riderWait', overlays: [{text:'RED LIGHT',small:'24 s remaining',cls:'warn right',top:'18%'},{text:'Stop line',cls:'center',top:'72%',left:'50%'},{text:'Bike lane',cls:'right',top:'70%'}] },
+    { stage: 'Cross with care', detail: 'When the light turns green, AR marks the path forward and highlights areas where turning traffic may cross it.', insight: 'The red zone overlaps the diagonal bike crossing where turning traffic may pass.', view: 'AR VIEW · LIVE', route: 'PROCEED WITH CAUTION', distance: '17 s remaining', icon: '↑', title: 'Continue straight', subtitle: 'Watch for turning traffic', advisory: 'Caution: turning traffic may cross your path. Check the highlighted conflict zone.', advisoryType: 'danger', action: 'Restart journey', status: 'Green signal', art: 'riderGo', overlays: [{text:'GREEN LIGHT',small:'17 s remaining',cls:'green right',top:'17%'},{text:'Conflict zone',small:'Turning traffic crosses here',cls:'danger left',top:'44%'}] }
   ],
   driver: [
     { stage: 'Find the correct lane', detail: 'Mary approaches the junction. AR labels each lane and highlights the border of the lane for her right turn.', insight: 'Lane labels and a highlighted border make the intended turn lane clear before Mary reaches the junction.', view: 'AR VIEW · LIVE', route: 'LANE GUIDANCE', distance: '40 m ahead', icon: '↱', title: 'Use current lane', subtitle: 'Right turn at the junction', advisory: 'Stay in the highlighted lane. The bike lane is immediately to your right.', advisoryType: '', action: 'Approach red light', status: 'Route active', art: 'driverLane', overlays: [{text:'Left turn',cls:'left',top:'52%'},{text:'Right turn',cls:'center',left:'54%',top:'61%'},{text:'Bike lane',cls:'right',top:'74%'}] },
@@ -21,41 +21,76 @@ const defs = `<defs><pattern id="grass" width="24" height="24" patternUnits="use
 const bike = (x,y,scale=1) => `<g transform="translate(${x} ${y}) scale(${scale})" fill="none" stroke="#151a23" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="-18" cy="8" r="10" fill="#f7f9fc"/><circle cx="18" cy="8" r="10" fill="#f7f9fc"/><path d="M-18 8L-5-11L7 8H-18M7 8L18 8L7-9H-3M-5-11H-12M7-9H15"/></g>`;
 const signal = (color) => `<g filter="url(#shadow)"><rect x="284" y="45" width="11" height="167" rx="4" fill="#58636f"/><rect x="272" y="56" width="36" height="72" rx="9" fill="#171c25" stroke="#f8fafc" stroke-width="3"/><circle cx="290" cy="74" r="7" fill="${color==='red'?'#ec394c':'#56616d'}"/><circle cx="290" cy="96" r="7" fill="#56616d"/><circle cx="290" cy="118" r="7" fill="${color==='green'?'#5ca2f6':'#56616d'}"/></g>`;
 
-function mapArt(){const markerY=360-(30-state.distance)*0.9;return `<svg viewBox="0 0 360 430" preserveAspectRatio="xMidYMid slice" aria-label="Top down campus junction map">${defs}<rect width="360" height="430" fill="url(#grass)"/><path d="M0 166H360V278H0Z M123 0H239V430H123Z" fill="#717b88"/><path d="M0 161H360M0 282H360M119 0V430M243 0V430" stroke="#f8fafc" stroke-width="5"/><path d="M164 0V150M204 0V150M164 292V430M204 292V430M0 222H108M256 222H360" stroke="#e6ebf1" stroke-width="2" stroke-dasharray="11 12" opacity=".7"/><g fill="#f7f9fc">${Array.from({length:6},(_,i)=>`<rect x="${124+i*18}" y="135" width="10" height="22" rx="1"/>`).join('')}${Array.from({length:6},(_,i)=>`<rect x="${124+i*18}" y="287" width="10" height="22" rx="1"/>`).join('')}${Array.from({length:5},(_,i)=>`<rect x="96" y="${169+i*20}" width="22" height="10" rx="1"/>`).join('')}${Array.from({length:5},(_,i)=>`<rect x="247" y="${169+i*20}" width="22" height="10" rx="1"/>`).join('')}</g><path d="M186 418V351C186 317 187 289 178 270C165 242 159 226 166 204C172 185 184 175 185 158V60" fill="none" stroke="#10152188" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/><path d="M186 418V351C186 317 187 289 178 270C165 242 159 226 166 204C172 185 184 175 185 158V60" fill="none" stroke="#397fe6" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/><path d="M185 57l-15 22h30z" fill="#397fe6" stroke="#1c3f72" stroke-width="2"/><circle cx="186" cy="${markerY}" r="24" fill="#ffffff" filter="url(#shadow)"/><circle cx="186" cy="${markerY}" r="15" fill="#397fe6"/>${bike(186,markerY-3,.44)}<rect x="14" y="68" width="101" height="53" rx="11" fill="#ffffff" filter="url(#shadow)"/><text x="27" y="91" font-size="10" font-weight="800" fill="#244e89">JUNCTION AHEAD</text><text x="27" y="107" font-size="12" font-weight="800" fill="#111318">${state.distance} m · Straight ↑</text><circle cx="299" cy="339" r="25" fill="#ffffff" filter="url(#shadow)"/><path d="M299 326v13l8 8" fill="none" stroke="#3e5e83" stroke-width="3" stroke-linecap="round"/></svg>`}
+function mapArt(){
+  const markerY=360-(30-state.distance)*0.9;
+  const crossingTop=Array.from({length:6},(_,i)=>`<rect x="${124+i*18}" y="136" width="10" height="20" rx="1"/>`).join('');
+  const crossingNear=Array.from({length:6},(_,i)=>`<rect x="${124+i*18}" y="289" width="10" height="20" rx="1"/>`).join('');
+  const crossingLeft=Array.from({length:5},(_,i)=>`<rect x="96" y="${169+i*20}" width="22" height="10" rx="1"/>`).join('');
+  const crossingRight=Array.from({length:5},(_,i)=>`<rect x="247" y="${169+i*20}" width="22" height="10" rx="1"/>`).join('');
+  return `<svg viewBox="0 0 360 430" preserveAspectRatio="xMidYMid slice" aria-label="Top down junction map showing the bike lane on the near right, crossing diagonally to the far left">${defs}
+    <rect width="360" height="430" fill="url(#grass)"/>
+    <path d="M0 166H360V278H0Z M123 0H239V430H123Z" fill="#717b88"/>
+    <path d="M0 161H360M0 282H360M119 0V430M243 0V430" stroke="#f8fafc" stroke-width="5"/>
+    <path d="M181 0V150M181 292V430M0 222H108M256 222H360" stroke="#e6ebf1" stroke-width="2" stroke-dasharray="11 12" opacity=".7"/>
+    <g fill="#f7f9fc">${crossingTop}${crossingNear}${crossingLeft}${crossingRight}</g>
+    <path d="M205 430V278H239V430Z M123 166V0H157V166Z" fill="#438beb45"/>
+    <path d="M205 430V278M239 430V278M123 166V0M157 166V0" stroke="#3d86e9" stroke-width="3" opacity=".85"/>
+    <path d="M205 278L123 166M239 278L157 166" fill="none" stroke="#6aa7f1" stroke-width="3" stroke-dasharray="10 8"/>
+    <path d="M222 418V278" fill="none" stroke="#397fe6" stroke-width="11" stroke-linecap="round"/>
+    <path d="M222 278L140 166" fill="none" stroke="#397fe6" stroke-width="11" stroke-linecap="round" stroke-dasharray="15 11"/>
+    <path d="M140 166V59" fill="none" stroke="#397fe6" stroke-width="11" stroke-linecap="round"/>
+    <path d="M140 51l-14 22h28z" fill="#397fe6" stroke="#1c3f72" stroke-width="2"/>
+    <circle cx="222" cy="${markerY}" r="24" fill="#ffffff" filter="url(#shadow)"/>
+    <circle cx="222" cy="${markerY}" r="15" fill="#397fe6"/>${bike(222,markerY-3,.44)}
+    <rect x="14" y="68" width="101" height="53" rx="11" fill="#ffffff" filter="url(#shadow)"/>
+    <text x="27" y="91" font-size="10" font-weight="800" fill="#244e89">JUNCTION AHEAD</text>
+    <text x="27" y="107" font-size="12" font-weight="800" fill="#111318">${state.distance} m · Straight ↑</text>
+    <circle cx="299" cy="339" r="25" fill="#ffffff" filter="url(#shadow)"/>
+    <path d="M299 326v13l8 8" fill="none" stroke="#3e5e83" stroke-width="3" stroke-linecap="round"/></svg>`;
+}
 
 function roadBase(signalColor='red') {
-  const stripes=Array.from({length:8},(_,i)=>{
-    const x=101+i*20;
-    return `<path d="M${x} 288h12l6 27h-16z"/>`;
+  // Both road edges share the same vanishing point, (180, 80).
+  // The bike lane uses the outer right strip near the rider and the outer left strip beyond the junction.
+  const nearCrosswalk=Array.from({length:8},(_,i)=>{
+    const x=84+i*25;
+    return `<path d="M${x} 288h14l4 27h-18z"/>`;
+  }).join('');
+  const farCrosswalk=Array.from({length:7},(_,i)=>{
+    const x=125+i*16;
+    return `<path d="M${x} 188h9l3 14h-12z"/>`;
   }).join('');
   return `<rect width="360" height="430" fill="#e9edf2"/>
-    <path d="M0 88L92 73L108 199L0 207Z M360 85L273 72L255 201L360 207Z" fill="#c8cfd8"/>
-    <path d="M0 110L96 97M0 145L101 132M360 111L269 98M360 145L264 130" stroke="#a8b3c0" stroke-width="3"/>
-    <path d="M152 113H208L246 207H114Z" fill="#606c79"/>
-    <path d="M180 120V190" stroke="#f8fafc" stroke-width="3" stroke-dasharray="12 12"/>
-    <path d="M0 205H360V286H0Z" fill="#7d8794"/>
+    <path d="M0 86L143 74L122 203L0 205Z M360 86L217 74L238 203L360 205Z" fill="#c8cfd8"/>
+    <path d="M0 110L139 98M0 145L134 132M360 110L221 98M360 145L226 132" stroke="#a8b3c0" stroke-width="3"/>
+    <path d="M178 80H182L240 205H120Z" fill="#606c79"/>
+    <path d="M180 92V178" stroke="#f8fafc" stroke-width="3" stroke-dasharray="11 10"/>
+    <path d="M0 205H360V285H0Z" fill="#7d8794"/>
     <path d="M0 244H360" stroke="#f8fafc" stroke-width="3" stroke-dasharray="18 17"/>
-    <path d="M0 286H360" stroke="#ffffff" stroke-width="4"/>
-    <path d="M0 430L108 284H252L360 430Z" fill="#65717e"/>
-    <path d="M0 430L101 285H110L38 430Z M360 430L259 285H250L322 430Z" fill="#c7cfd8"/>
-    <path d="M0 430L108 284M360 430L252 284" stroke="#ffffff" stroke-width="4"/>
-    <path d="M180 425V348" stroke="#f4f7fa" stroke-width="3" stroke-dasharray="14 15"/>
-    <g fill="#f8fafc">${stripes}</g>
-    <path d="M60 334H300" stroke="#ffffff" stroke-width="7"/>
-    <path d="M122 430L151 286M238 430L209 286" stroke="#5b9deb" stroke-width="5" opacity=".85"/>
+    <path d="M82 285H278L348 430H12Z" fill="#65717e"/>
+    <path d="M0 285H82L12 430H0Z M278 285H360V430H348Z" fill="#c7cfd8"/>
+    <path d="M82 285L12 430M278 285L348 430" stroke="#ffffff" stroke-width="4"/>
+    <path d="M180 419V336" stroke="#f4f7fa" stroke-width="3" stroke-dasharray="14 15"/>
+    <g fill="#f8fafc">${farCrosswalk}${nearCrosswalk}</g>
+    <path d="M49 338H311" stroke="#ffffff" stroke-width="7"/>
+    <path d="M237 285H278L348 430H278Z" fill="#438beb40"/>
+    <path d="M120 205L178 80H179L145 205Z" fill="#438beb40"/>
+    <path d="M237 285L278 430M278 285L348 430M120 205L178 80M145 205L179 80" fill="none" stroke="#4a91ed" stroke-width="4" opacity=".9"/>
+    <path d="M237 285L120 205M278 285L145 205" fill="none" stroke="#6aa7f1" stroke-width="3" stroke-dasharray="12 9"/>
     ${signal(signalColor)}`;
 }
-function riderWaitArt(){return `<svg viewBox="0 0 360 430" preserveAspectRatio="xMidYMid slice" aria-label="AR view of a continuous four-way junction, crosswalk and stop line">${defs}${roadBase('red')}
-  <path d="M61 334H299" stroke="#ed4357" stroke-width="11" stroke-linecap="round" opacity=".9"/>
-  <path d="M61 334H299" stroke="#ffffff" stroke-width="2" stroke-dasharray="12 8"/>
-  ${bike(180,382,.88)}</svg>`}
-function riderGoArt(){return `<svg viewBox="0 0 360 430" preserveAspectRatio="xMidYMid slice" aria-label="AR view of a four-way junction with a conflict zone across the rider route">${defs}${roadBase('green')}
-  <path d="M15 229C91 229 143 237 180 252C215 267 239 276 280 275" fill="none" stroke="#ef7280" stroke-width="10" stroke-dasharray="18 12" opacity=".85"/>
-  <path data-conflict="true" d="M145 224Q180 219 216 231L223 278Q180 288 143 274Z" fill="url(#hatch)" stroke="#d92842" stroke-width="2"/>
-  <path d="M180 420V178" fill="none" stroke="#14192388" stroke-width="26" stroke-linecap="round"/>
-  <path d="M180 420V178" fill="none" stroke="#397fe6" stroke-width="11" stroke-linecap="round" stroke-dasharray="21 14"/>
-  <path d="M180 169l-16 27h32z" fill="#397fe6"/>
-  ${bike(180,382,.88)}</svg>`}
+function riderWaitArt(){return `<svg viewBox="0 0 360 430" preserveAspectRatio="xMidYMid slice" aria-label="AR view with the bike lane on the near right, a diagonal dashed crossing, and the far-left bike lane">${defs}${roadBase('red')}
+  <path d="M48 338H312" stroke="#ed4357" stroke-width="10" stroke-linecap="round" opacity=".9"/>
+  <path d="M48 338H312" stroke="#ffffff" stroke-width="2" stroke-dasharray="12 8"/>
+  ${bike(295,382,.82)}</svg>`}
+function riderGoArt(){return `<svg viewBox="0 0 360 430" preserveAspectRatio="xMidYMid slice" aria-label="AR view showing the bike lane shifting from the near right to the far left across a diagonal dashed path">${defs}${roadBase('green')}
+  <path d="M15 227C83 229 149 238 207 249C237 257 266 265 324 265" fill="none" stroke="#ef7280" stroke-width="9" stroke-dasharray="16 11" opacity=".85"/>
+  <path data-conflict="true" d="M173 224L219 220L234 260L191 273Z" fill="url(#hatch)" stroke="#d92842" stroke-width="2"/>
+  <path d="M316 419L258 285" fill="none" stroke="#397fe6" stroke-width="11" stroke-linecap="round"/>
+  <path d="M258 285L133 205" fill="none" stroke="#397fe6" stroke-width="11" stroke-linecap="round" stroke-dasharray="18 13"/>
+  <path d="M133 205L176 91" fill="none" stroke="#397fe6" stroke-width="11" stroke-linecap="round"/>
+  <path d="M178 82l-15 23h28z" fill="#397fe6"/>
+  ${bike(295,382,.82)}</svg>`}
 function driverBase(signalColor='red') {
   const nearCrosswalk=Array.from({length:9},(_,i)=>{
     const x=182+i*18;
