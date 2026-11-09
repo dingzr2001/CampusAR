@@ -75,6 +75,8 @@ button:focus-visible{outline:3px solid #e23d52;outline-offset:2px}
 .feedback-toast.danger{background:#ffe8ec;border-color:#e64359;color:#9f233a}
 .feedback-toast.success{background:#e7f1ff;border-color:#4a92ec;color:#215da8}
 .moving-actor{position:absolute;z-index:2;pointer-events:none;width:35px;height:35px;filter:drop-shadow(0 2px 4px #1118278a)}
+.marking-label{transform:translateX(-50%);border-color:#4aa7ff;background:#eaf5ff;color:#14569f;box-shadow:0 0 0 3px #4aa7ff55,0 7px 20px #11182733;white-space:nowrap}
+.lane-label{border-color:#70bdff;background:#eff8ff;color:#14569f}
 .moving-actor svg{width:100%;height:100%;fill:#111318;stroke:#fff;stroke-width:1.5;overflow:visible}
 .rider-actor{top:51%;animation:rider-cross 6s linear both}
 .driver-actor{left:75%;animation:driver-cross 6s linear both}
@@ -129,6 +131,7 @@ button:focus-visible{outline:3px solid #e23d52;outline-offset:2px}
 .demo-actions .demo-move span{font-size:17px}
 .mobile-demo-console{display:none}
 .scene-art{transform-origin:50% 22%;transition:transform .45s ease-out}
+.scene-art svg{transition:none}
 .rider-actor,.driver-actor{animation-duration:12s}
 
 @media(max-width:700px){
