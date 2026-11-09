@@ -113,3 +113,44 @@ button:focus-visible{outline:3px solid #e23d52;outline-offset:2px}
 .driver-mode .next-button{padding:0 7px;min-width:67px}
 @media(max-width:700px){.bottom-sheet{height:252px}}
 @media(max-width:700px) and (orientation:portrait){.driver-mode .phone{border-color:#15191f}.driver-mode .advisory{margin-top:8px;min-height:0}.driver-mode .choice-row{margin-top:7px}.driver-mode .sheet-actions{margin-top:auto}}
+
+/* The presenter operates the simulation from outside the rider and car displays. */
+.demo-console{background:#202733;color:#f8fbff;border:1px solid #40506a;border-radius:14px;padding:13px;margin-top:22px;box-shadow:0 10px 26px #0002}
+.demo-head{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#94bdf5;font-size:10px;font-weight:900;letter-spacing:1.15px}
+.demo-stage{font-size:9px;color:#d8e7ff;letter-spacing:0;background:#32435c;border-radius:99px;padding:3px 7px;white-space:nowrap}
+.demo-location{font-size:13px;font-weight:800;margin:9px 0 11px;white-space:nowrap}
+.demo-location span{font-size:10px;font-weight:600;color:#b2bfce}
+.demo-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.demo-actions button{height:32px;border:1px solid #5b6e89;background:#303b4d;color:#edf4ff;border-radius:8px;font-size:10px;font-weight:800;padding:0 7px;white-space:nowrap}
+.demo-actions button:hover{background:#3e506b}
+.demo-actions button:disabled{opacity:.43;cursor:default}
+.demo-actions .demo-move{background:#347fe2;border-color:#347fe2;color:#fff;display:flex;align-items:center;justify-content:space-between;font-size:11px}
+.demo-actions .demo-move:hover{background:#236cc9}
+.demo-actions .demo-move span{font-size:17px}
+.mobile-demo-console{display:none}
+.scene-art{transform-origin:50% 22%;transition:transform .45s ease-out}
+.rider-actor,.driver-actor{animation-duration:12s}
+
+@media(max-width:700px){
+  .mobile-demo-console{display:block;position:relative;z-index:12;border-radius:0;margin:0;padding:7px 10px 8px;min-height:103px;box-shadow:0 -4px 18px #0003}
+  .mobile-demo-console .demo-head{font-size:9px}
+  .mobile-demo-console .demo-location{margin:4px 0 6px;font-size:11px}
+  .mobile-demo-console .demo-actions{display:flex;gap:5px}
+  .mobile-demo-console .demo-actions button{flex:1;min-width:0;height:30px;padding:0 5px;font-size:9px}
+  .mobile-demo-console .demo-actions .demo-move{flex:1.4;font-size:10px}
+  .phone-wrap{height:calc(100dvh - 103px);min-height:0}
+  .phone{height:100%}
+  .bottom-sheet{height:235px}
+}
+@media(max-width:700px) and (orientation:portrait){
+  .driver-mode .phone-wrap{height:calc(100dvh - 103px)}
+  .driver-mode .phone{width:calc(100dvh - 128px)}
+}
+@media(max-height:600px) and (orientation:landscape){
+  .driver-mode .phone-wrap{height:calc(100dvh - 74px)}
+  .driver-mode .phone{height:100%;width:100vw}
+  .driver-mode .mobile-demo-console{min-height:74px;padding:4px 10px}
+  .driver-mode .mobile-demo-console .demo-head{display:none}
+  .driver-mode .mobile-demo-console .demo-location{margin:0 0 4px}
+  .driver-mode .mobile-demo-console .demo-actions button{height:30px}
+}

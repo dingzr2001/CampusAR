@@ -11,7 +11,7 @@ const journeys = {
   ]
 };
 
-const state = {persona:'rider',step:0,audio:true,distance:30,stopped:false,lane:null,remaining:8,hazardRemaining:6,yielded:false,hazardSeen:false,errors:0,summary:false,feedback:null};
+const state = {persona:'rider',step:0,audio:true,distance:30,stopped:false,lane:null,remaining:20,hazardRemaining:12,yielded:false,hazardSeen:false,errors:0,summary:false,feedback:null};
 let ticker=null;
 let feedbackTimeout=null;
 const $ = id => document.getElementById(id);
@@ -44,7 +44,7 @@ function mapArt(){
     <circle cx="222" cy="${markerY}" r="15" fill="#397fe6"/>${bike(222,markerY-3,.44)}
     <rect x="14" y="68" width="101" height="53" rx="11" fill="#ffffff" filter="url(#shadow)"/>
     <text x="27" y="91" font-size="10" font-weight="800" fill="#244e89">JUNCTION AHEAD</text>
-    <text x="27" y="107" font-size="12" font-weight="800" fill="#111318">${state.distance} m · Straight ↑</text>
+    <text x="27" y="107" font-size="12" font-weight="800" fill="#111318">${state.distance>0?state.distance+' m':'At junction'} · Straight ↑</text>
     <circle cx="299" cy="339" r="25" fill="#ffffff" filter="url(#shadow)"/>
     <path d="M299 326v13l8 8" fill="none" stroke="#3e5e83" stroke-width="3" stroke-linecap="round"/></svg>`;
 }
@@ -155,18 +155,18 @@ function renderFeedback(){
 function clearTicker(){if(ticker){clearInterval(ticker);ticker=null}}
 function resetJourney(persona=state.persona){
   clearTicker();clearTimeout(feedbackTimeout);
-  Object.assign(state,{persona,step:0,distance:30,stopped:false,lane:null,remaining:8,hazardRemaining:6,yielded:false,hazardSeen:false,errors:0,summary:false,feedback:null});
+  Object.assign(state,{persona,step:0,distance:persona==='driver'?40:30,stopped:false,lane:null,remaining:20,hazardRemaining:12,yielded:false,hazardSeen:false,errors:0,summary:false,feedback:null});
   $('mode-menu').hidden=true;$('mode-button').setAttribute('aria-expanded','false');
   render();
 }
 function enterStep(step){
   clearTicker();clearTimeout(feedbackTimeout);state.feedback=null;state.step=step;state.summary=false;
   if(step===1){
-    state.remaining=8;
+    state.remaining=20;
     cue(state.persona==='rider'?'Red light. Wait behind the stop line.':'No turn on red. Wait for the signal.');
   }
   if(step===2){
-    state.hazardRemaining=6;state.yielded=false;state.hazardSeen=false;
+    state.hazardRemaining=12;state.yielded=false;state.hazardSeen=false;
     cue('Signal changed. Check the highlighted conflict zone before proceeding.');
   }
   render();
@@ -178,36 +178,63 @@ function enterStep(step){
     }else if(state.step===2){
       state.hazardRemaining=Math.max(0,state.hazardRemaining-1);
       render();
-      if(state.hazardRemaining===0){clearTicker();showFeedback('Conflict zone clear. Check your surroundings, then proceed.','success');cue('Conflict zone clear. Proceed when safe.')}
+      if(state.hazardRemaining===0){clearTicker();if(state.distance<=-30){state.summary=true;render();cue('Journey complete.')}else{showFeedback('Conflict zone clear. Check your surroundings, then proceed.','success');cue('Conflict zone clear. Proceed when safe.')}}
     }
   },1000);
 }
 function actionPrimary(){
   if(state.step===0){
     if(state.persona==='rider'){
-      if(state.distance>0){state.distance=Math.max(0,state.distance-10);render();if(state.distance===0)showFeedback('You reached the junction. Stop before opening AR.');return}
-      if(!state.stopped){state.stopped=true;render();showFeedback('Stopped at the line. AR is available.','success');return}
+      if(!state.stopped){state.errors++;showFeedback('Stop before opening the AR view.','danger');return}
       enterStep(1);return;
     }
-    if(state.lane!=='right'){state.errors++;showFeedback('Choose the right-turn lane before approaching the light.','danger');return}
-    enterStep(1);return;
+    showFeedback(state.lane==='right'?'Right-turn lane confirmed. Continue toward the stop line.':'Select the right-turn lane before the junction.',state.lane==='right'?'success':'info');return;
   }
-  if(state.step===1){showFeedback('Holding position while the red signal counts down.','info');return}
+  if(state.step===1){showFeedback('Red light. Wait behind the stop line.','info');return}
   if(state.step===2){
-    if(state.hazardRemaining>0){state.errors++;showFeedback(state.persona==='rider'?'Turning traffic is crossing your route. Yield first.':'The exit crosswalk is occupied. Yield first.','danger');cue('Conflict ahead. Yield.');return}
-    clearTicker();state.summary=true;render();cue('Journey complete.');
+    if(state.hazardRemaining>0){showFeedback(state.persona==='rider'?'Turning traffic is crossing your route. Yield first.':'The exit crosswalk is occupied. Yield first.','danger');return}
+    showFeedback('Crossing clear. Look again before continuing.','success');
   }
 }
 function actionSecondary(){
   if(state.step===0){
     if(state.persona==='rider'){
-      if(!state.stopped){state.errors++;showFeedback('Stop at the line before opening the AR view.','danger');return}
-      enterStep(1);return;
+      showFeedback('Stop in the bike lane before opening AR. The dashed route crosses to the far-left lane.','info');return;
     }
     showFeedback('For a right turn, select the lane beside the bike lane.','info');return;
   }
-  if(state.step===1){state.errors++;showFeedback(state.persona==='rider'?'The signal is red. Stay behind the stop line.':'No turn on red. Wait behind the stop line.','danger');cue('Red signal. Wait.');return}
+  if(state.step===1){showFeedback(state.persona==='rider'?'The signal is red. Stay behind the stop line.':'No turn on red. Wait behind the stop line.','danger');cue('Red signal. Wait.');return}
   if(state.step===2){state.yielded=true;showFeedback(state.hazardRemaining>0?'Good choice. Wait for the crossing to clear.':'The crossing is clear. Check once more, then proceed.','success');cue('Yielding at the conflict zone.');}
+}
+function demoMove(){
+  if(state.summary)return;
+  if(state.distance<=-40){showFeedback('Journey endpoint reached. Reset to start again.');return}
+  state.distance-=10;
+  state.stopped=false;
+  if(state.step===0&&state.distance<=0){
+    if(state.persona==='driver'){
+      if(state.lane!=='right'){state.errors++;render();showFeedback('At the stop line. Choose the right-turn lane before continuing.','danger');return}
+      enterStep(1);showFeedback('At the stop line. No turn on red.','danger');return;
+    }
+    render();showFeedback(state.distance<0?'You passed the junction without checking AR. Stop and open it.':'At the stop line. Stop, then open AR.',state.distance<0?'danger':'info');return;
+  }
+  if(state.step===1&&state.distance<0){state.errors++;render();showFeedback('Red light: you crossed the stop line. Stop and wait.','danger');cue('Red light. Stop.');return}
+  if(state.step===2&&state.distance<0&&state.hazardRemaining>0){state.errors++;render();showFeedback('Conflict zone occupied. Yield before continuing.','danger');cue('Conflict ahead. Yield.');return}
+  if(state.step===2&&state.distance<=-30&&state.hazardRemaining===0){clearTicker();state.summary=true;render();cue('Journey complete.');return}
+  render();
+  if(state.step===0)showFeedback(`${state.distance} m to the stop line.`,'info');
+  else if(state.step===2&&state.hazardRemaining===0)showFeedback('Route ahead is clear. Check again and continue.','success');
+}
+function demoStop(){
+  state.stopped=!state.stopped;render();
+  showFeedback(state.stopped?'Stopped. Check the signal and surrounding traffic.':'Movement resumed.','info');
+}
+function renderDemoControls(){
+  const location=state.distance>0?`${state.distance} m before stop line`:state.distance===0?'At stop line':`${Math.abs(state.distance)} m beyond stop line`;
+  const stage=state.step===0?'Approach':state.step===1?'Red light':'Green light';
+  const html=`<div class="demo-head"><span>PRESENTER CONTROLS</span><span class="demo-stage">${stage}</span></div><div class="demo-location">${location} <span>· ${state.stopped?'Stopped':'Moving'}</span></div><div class="demo-actions"><button type="button" class="demo-move" data-demo-action="move" ${state.summary?'disabled':''}>Move +10 m <span>→</span></button><button type="button" data-demo-action="stop">${state.stopped?'Resume':'Stop'}</button><button type="button" data-demo-action="signal" ${state.step!==1?'disabled':''}>Green light</button><button type="button" data-demo-action="reset">Reset</button></div>`;
+  $('desktop-demo-console').innerHTML=html;
+  $('mobile-demo-console').innerHTML=html;
 }
 function render(){
   const item=journeys[state.persona][state.step];
@@ -216,29 +243,29 @@ function render(){
   document.querySelectorAll('.persona').forEach(btn=>{const active=btn.dataset.persona===state.persona;btn.classList.toggle('active',active);btn.setAttribute('aria-pressed',String(active))});
   $('stage-list').innerHTML=journeys[state.persona].map((stage,i)=>`<button class="stage-item ${i===state.step?'active':''}" data-step="${i}" ${i===state.step?'aria-current="step"':''}><span class="stage-number">0${i+1}</span><strong>${stage.stage}</strong></button>`).join('');
   setText('app-subtitle',driver?'Car journey':'Scooter journey');setText('desktop-title',driver?'Driver junction simulator':'Scooter junction simulator');
-  setText('view-label',item.view);setText('scene-step',`0${state.step+1} / 03`);
+  setText('view-label',item.view);setText('scene-step',`0${state.step+1} / 03 · ${state.distance>0?state.distance+' m':state.distance===0?'LINE':'+'+Math.abs(state.distance)+' m'}`);
   setText('route-label',item.route);setText('maneuver-icon',item.icon);setText('maneuver-title',item.title);setText('maneuver-detail',item.subtitle);
   setText('footer-audio',state.audio?'Audio on':'Audio off');
   $('sound-button').classList.toggle('muted',!state.audio);$('sound-button').textContent=state.audio?'◖))':'◖×';$('sound-button').setAttribute('aria-pressed',String(state.audio));
   let distance=item.distance,advisory=item.advisory,advisoryType=item.advisoryType,primary=item.action,secondary='',status=item.status;
   if(state.step===0){
     if(driver){
-      distance='40 m ahead';primary='Continue to light';secondary='Help';
+      distance=state.distance>0?`${state.distance} m ahead`:state.distance===0?'At stop line':`${Math.abs(state.distance)} m beyond`;primary='Check lane';secondary='Help';
       advisory=state.lane==='right'?'Right-turn lane selected. The bike lane is beside you.':state.lane?'That lane does not serve this turn. Select the right-turn lane.':'Select the lane for the right turn.';
       advisoryType=state.lane&&state.lane!=='right'?'danger':'';
       status=state.lane==='right'?'Lane confirmed':'Choose a lane';
     }else{
-      distance=`${state.distance} m ahead`;primary=state.distance>0?'Move 10 m':state.stopped?'Open AR':'Stop at line';secondary=state.stopped?'':'Open AR';
-      advisory=state.stopped?'Stopped at the line. Open AR to inspect the crossing.':state.distance===0?'At the junction. Stop before opening AR.':'Move closer, then stop before opening AR.';
+      distance=state.distance>0?`${state.distance} m ahead`:state.distance===0?'At stop line':`${Math.abs(state.distance)} m beyond`;primary='Open AR';secondary='Why stop?';
+      advisory=state.stopped?'Stopped. Open AR to inspect the crossing.':state.distance===0?'At the junction. Stop before opening AR.':'Stop before opening AR to inspect the junction.';
       status=state.stopped?'Stopped':'Approaching';
     }
   }else if(state.step===1){
-    distance=`00:${String(state.remaining).padStart(2,'0')}`;primary='Hold position';secondary=driver?'Turn now':'Cross now';status='Red signal';
+    distance=`00:${String(state.remaining).padStart(2,'0')} · ${state.distance>0?state.distance+' m to line':state.distance===0?'at line':'past line'}`;primary='Check signal';secondary=driver?'Why wait?':'Why stop?';status='Red signal';
     advisory=driver?'No turn on red. Watch the crosswalk and wait.':'Stay behind the stop line until the signal changes.';
     advisoryType='alert';
   }else{
     distance=state.hazardRemaining>0?`Occupied · ${state.hazardRemaining}s`:'Crossing clear';
-    primary=driver?'Make right turn':'Continue straight';secondary='Yield';status=state.hazardRemaining>0?'Conflict ahead':'Clear to check';
+    primary='Check crossing';secondary='Yield';status=state.hazardRemaining>0?'Conflict ahead':'Clear to check';
     advisory=state.hazardRemaining>0?(driver?'Pedestrian is using the exit crosswalk. Yield.':'Turning traffic is crossing the straight route. Yield.'):'Conflict area is clear. Check again, then proceed.';
     advisoryType=state.hazardRemaining>0?'danger':'';
   }
@@ -249,18 +276,22 @@ function render(){
   const laneRow=$('choice-row');laneRow.hidden=!(driver&&state.step===0);
   if(!laneRow.hidden)laneRow.innerHTML=[['left','Left'],['right','Right'],['bike','Bike']].map(([key,label])=>`<button class="lane-choice ${state.lane===key?'selected':''}" data-lane="${key}" aria-pressed="${state.lane===key}">${label}</button>`).join('');
   $('scene-art').innerHTML=art[item.art]();
+  const travel=Math.max(0,((driver?40:30)-state.distance)/10);
+  $('scene-art').style.transform=state.step===0&&!driver?'none':`translateY(${Math.min(travel,7)*5}px) scale(${1+Math.min(travel,7)*.085})`;
   $('scene').classList.toggle('hazard-cleared',state.step===2&&state.hazardRemaining===0);
   const overlays=item.overlays.map((o,i)=>{
     let small=o.small||'';
     if(state.step===1&&i===0)small=`00:${String(state.remaining).padStart(2,'0')} remaining`;
     if(state.step===2&&i===0)small=state.hazardRemaining>0?`${state.hazardRemaining}s · crossing active`:'Crossing clear';
-    return `<button type="button" class="overlay ${o.cls}" data-hint="${i}" style="top:${o.top};${o.left?'left:'+o.left+';':''}">${o.text}${small?`<small>${small}</small>`:''}</button>`;
+    const top=!driver&&state.step===1&&i===1?`${Math.min(89,79+travel*5)}%`:o.top;
+    return `<button type="button" class="overlay ${o.cls}" data-hint="${i}" style="top:${top};${o.left?'left:'+o.left+';':''}">${o.text}${small?`<small>${small}</small>`:''}</button>`;
   }).join('');
-  const actor=state.step===2&&state.hazardRemaining>0?`<div class="moving-actor ${driver?'driver-actor':'rider-actor'}" style="animation-delay:-${6-state.hazardRemaining}s" aria-hidden="true">${driver?'<svg viewBox="0 0 26 42"><circle cx="13" cy="7" r="5"/><path d="M13 13v15M13 18L4 26M13 18l9 7M13 28l-7 12M13 28l9 12"/></svg>':'<svg viewBox="0 0 40 24"><rect x="4" y="5" width="30" height="14" rx="4"/><circle cx="12" cy="20" r="3"/><circle cx="28" cy="20" r="3"/></svg>'}</div>`:'';
+  const actor=state.step===2&&state.hazardRemaining>0?`<div class="moving-actor ${driver?'driver-actor':'rider-actor'}" style="animation-delay:-${12-state.hazardRemaining}s" aria-hidden="true">${driver?'<svg viewBox="0 0 26 42"><circle cx="13" cy="7" r="5"/><path d="M13 13v15M13 18L4 26M13 18l9 7M13 28l-7 12M13 28l9 12"/></svg>':'<svg viewBox="0 0 40 24"><rect x="4" y="5" width="30" height="14" rx="4"/><circle cx="12" cy="20" r="3"/><circle cx="28" cy="20" r="3"/></svg>'}</div>`:'';
   $('scene-overlays').innerHTML=overlays+actor;
   setText('details-count',`0${state.step+1} / 03`);setText('details-title',item.stage);setText('details-description',item.detail);setText('insight-copy',item.insight);
   $('back-button').disabled=state.step===0;$('back-button').style.opacity=state.step===0?'.35':'1';
   $('summary').hidden=!state.summary;
+  renderDemoControls();
   if(state.summary){
     const first=driver?'Selected the right-turn lane':'Stopped before opening AR';
     $('summary').innerHTML=`<div class="summary-card" role="dialog" aria-modal="true" aria-labelledby="summary-title"><div class="summary-kicker">JOURNEY COMPLETE</div><h2 id="summary-title">You made it through.</h2><p>Review the decisions that guided this crossing.</p><div class="summary-line"><span>01</span>${first}</div><div class="summary-line"><span>02</span>Waited for the red signal</div><div class="summary-line"><span>03</span>${state.yielded?'Yielded at the conflict zone':'Proceeded after the conflict cleared'}</div><div class="summary-note">${state.errors?`${state.errors} unsafe choice${state.errors===1?'':'s'} prompted a warning. Try again to compare.`:'No unsafe choices in this run.'}</div><button id="replay-button">Replay journey</button><button id="switch-button">Try ${driver?'scooter rider':'car driver'} scenario</button></div>`;
@@ -268,6 +299,7 @@ function render(){
   renderFeedback();
 }
 $('primary-button').addEventListener('click',actionPrimary);
+document.addEventListener('click',e=>{const button=e.target.closest('[data-demo-action]');if(!button)return;const action=button.dataset.demoAction;if(action==='move')demoMove();if(action==='stop')demoStop();if(action==='signal'&&state.step===1)enterStep(2);if(action==='reset')resetJourney()});
 $('secondary-button').addEventListener('click',actionSecondary);
 $('back-button').addEventListener('click',()=>{if(state.step>0)enterStep(state.step-1)});
 $('choice-row').addEventListener('click',e=>{
