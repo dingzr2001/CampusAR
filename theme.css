@@ -30,11 +30,11 @@ button:focus-visible{outline:3px solid #e23d52;outline-offset:2px}
 .scene{background:#e9edf2}
 .scene-shade{background:linear-gradient(#11182722 0%,transparent 25%,transparent 72%,#11182731 100%)}
 .scene-pill,.scene-step{background:#fff;color:#253043;box-shadow:0 2px 8px #14192324}
-.overlay{background:#fff;color:#1c2634;border-color:#cbd4df;box-shadow:0 6px 20px #1118272e}
+.overlay{background:#ffffffa8;color:#1c2634;border-color:#cbd4df;box-shadow:0 6px 20px #1118272e}
 .overlay small{color:#66768a}
-.overlay.warn{background:#ffe8ec;border-color:#e8495c;color:#a8263b}
-.overlay.danger{background:#ffe8ec;border-color:#e8495c;color:#a8263b}
-.overlay.green{background:#e9f2ff;border-color:#69a8ff;color:#235da7}
+.overlay.warn{background:#ffe8ecb8;border-color:#e8495c;color:#a8263b}
+.overlay.danger{background:#ffe8eca8;border-color:#e8495c;color:#a8263b}
+.overlay.green{background:#e9f2ffb8;border-color:#69a8ff;color:#235da7}
 .scene-overlays{pointer-events:none}
 .scene-overlays .overlay{pointer-events:auto;cursor:pointer}
 .scene-overlays .overlay:hover{box-shadow:0 0 0 2px #3583e980,0 7px 22px #11182738}
@@ -75,10 +75,10 @@ button:focus-visible{outline:3px solid #e23d52;outline-offset:2px}
 .feedback-toast.danger{background:#ffe8ec;border-color:#e64359;color:#9f233a}
 .feedback-toast.success{background:#e7f1ff;border-color:#4a92ec;color:#215da8}
 .moving-actor{position:absolute;z-index:2;pointer-events:none;width:35px;height:35px;filter:drop-shadow(0 2px 4px #1118278a)}
-.marking-label{transform:translateX(-50%);border-color:#4aa7ff;background:#eaf5ff;color:#14569f;box-shadow:0 0 0 3px #4aa7ff55,0 7px 20px #11182733;white-space:nowrap}
-.lane-label{border-color:#70bdff;background:#eff8ff;color:#14569f}
+.marking-label{transform:translateX(-50%);border-color:#4aa7ff;background:#eaf5ff9e;color:#14569f;box-shadow:0 0 0 3px #4aa7ff55,0 7px 20px #11182733;white-space:nowrap}
+.lane-label{border-color:#70bdff;background:#eff8ff9e;color:#14569f}
 .phone.risk-active::after{content:'';position:absolute;inset:2px;border:5px solid #f33b55;border-radius:inherit;box-shadow:inset 0 0 24px #ed2e4b99,0 0 16px #f33b5577;z-index:21;pointer-events:none;animation:risk-edge-flash 1s ease-in-out infinite}
-.overlay.signal-urgent,.overlay.stop-urgent{background:#ffe0e6;border-color:#e92746;color:#a51d36;box-shadow:0 0 0 4px #f33b5559,0 7px 20px #11182733;animation:risk-cue-pulse 1s ease-in-out infinite}
+.overlay.signal-urgent,.overlay.stop-urgent{background:#ffe0e6ad;border-color:#e92746;color:#a51d36;box-shadow:0 0 0 4px #f33b5559,0 7px 20px #11182733;animation:risk-cue-pulse 1s ease-in-out infinite}
 .risk-marker{position:absolute;z-index:4;display:grid;place-items:center;width:31px;height:31px;border:3px solid #fff;border-radius:50%;background:#e92746;color:#fff;font-size:22px;font-weight:900;line-height:1;box-shadow:0 0 0 5px #e9274659,0 4px 15px #6e11289c;transform:translate(-50%,-50%);pointer-events:none;animation:risk-cue-pulse 1s ease-in-out infinite}
 @keyframes risk-edge-flash{0%,100%{opacity:.95}50%{opacity:.28}}
 @keyframes risk-cue-pulse{0%,100%{filter:brightness(1);scale:1}50%{filter:brightness(1.25);scale:1.1}}
@@ -175,3 +175,50 @@ body:not(.driver-mode) .bottom-sheet.is-collapsed .sheet-details{visibility:hidd
 body:not(.driver-mode) .bottom-sheet.is-dragging .sheet-details{visibility:visible}
 .driver-mode .sheet-details{display:flex;flex:1;min-height:0;flex-direction:column}
 @media(prefers-reduced-motion:reduce){body:not(.driver-mode) .bottom-sheet{transition:none}}
+
+/* Saved conflict reports stay yellow and never use the active red warning animation. */
+.reported-map-region rect{fill:#ffd24775;stroke:#f4ae19;stroke-width:3}
+.reported-map-region text{fill:#553b08;font-size:9px;font-weight:800;paint-order:stroke;stroke:#fff6d2;stroke-width:3px;pointer-events:none}
+.reported-ar-region{pointer-events:none}
+.reported-notice{position:absolute;top:27%;left:12px;z-index:4;max-width:155px;background:#fff5ce9e;border:1px solid #e1a817;border-radius:10px;padding:6px 8px;color:#67460c;font-size:9px;font-weight:900;box-shadow:0 5px 18px #11182725;pointer-events:none}
+.reported-notice small{display:block;font-size:9px;font-weight:600;margin-top:2px}
+.report-entry[hidden],.report-edge-button[hidden],.report-entry-action[hidden],.report-page[hidden]{display:none}
+.report-entry{position:absolute;right:0;top:48%;z-index:24;display:flex;align-items:center}
+.report-edge-button{width:28px;height:48px;border:1px solid #d1a337;border-right:0;border-radius:9px 0 0 9px;background:#ffde73;color:#533908;font-size:18px;box-shadow:0 3px 12px #1118273d}
+.report-entry-action{height:48px;max-width:170px;border:1px solid #c99a25;border-right:0;border-radius:9px 0 0 9px;background:#fff5d5;color:#61430e;padding:6px 10px;font-size:10px;font-weight:800;text-align:left;box-shadow:0 3px 12px #1118273d}
+.report-entry-action span{font-size:16px;margin-left:5px}
+.report-page{position:absolute;inset:54px 0 0;z-index:31;background:#f8fafc;color:#1c2634;padding:17px 18px 20px;display:flex;flex-direction:column;gap:9px;overflow:auto}
+.report-page{top:88px}
+.report-header{display:flex;gap:10px;align-items:center;flex:none}
+.report-header>button{border:1px solid #c5d2e2;border-radius:9px;background:#fff;color:#1e4e89;width:32px;height:32px;font-size:20px;flex:none}
+.report-header span,.report-form-kicker{font-size:9px;letter-spacing:1px;font-weight:900;color:#a06b00}
+.report-header h2{font-family:Manrope,sans-serif;font-size:17px;line-height:1.15;margin:1px 0 0}
+.report-intro{font-size:11px;color:#536276;line-height:1.35;margin:0;flex:none}
+.report-map{position:relative;min-height:195px;flex:1;border:1px solid #cbd5e1;border-radius:12px;background:#e7ebf0;overflow:hidden}
+.report-map svg{width:100%;height:100%;position:absolute;inset:0}
+.report-map-region{cursor:pointer;outline:none}
+.report-map-region rect{fill:#ffdf75a8;stroke:#ca8b00;stroke-width:2}
+.report-map-region text{fill:#4d3504;font-size:9px;font-weight:900;paint-order:stroke;stroke:#fff8df;stroke-width:3px;pointer-events:none}
+.report-map-region.submitted rect{fill:#f8bf39c9}
+.report-map-region.selected rect,.report-map-region:focus-visible rect{fill:#ffd040e8;stroke:#7e4e00;stroke-width:5}
+.report-map-region .report-hit,.report-map-region.selected .report-hit,.report-map-region.submitted .report-hit,.report-map-region:focus-visible .report-hit{fill:transparent;stroke:none;pointer-events:all}
+.report-legend{display:flex;gap:15px;font-size:9px;color:#64748b;font-weight:700;flex:none}
+.report-legend span{display:flex;align-items:center;gap:4px}
+.report-legend-dot{width:11px;height:11px;background:#ffdf75;border:1px solid #ca8b00;border-radius:3px}
+.report-legend-dot.submitted{background:#f8bf39}
+.report-form,.report-prompt{flex:none;background:#fff;border:1px solid #d7e0eb;border-radius:12px;padding:11px;box-shadow:0 4px 16px #11182712}
+.report-prompt{font-size:11px;color:#64748b}
+.report-form h3{font-size:13px;margin:2px 0 8px}
+.report-form label{display:block;font-size:10px;font-weight:800;color:#35465b;margin-bottom:5px}
+.report-form textarea{display:block;width:100%;resize:vertical;min-height:58px;max-height:100px;border:1px solid #bdcadb;border-radius:8px;padding:8px;font:11px 'DM Sans',sans-serif;color:#253043}
+.report-form button{border:0;border-radius:8px;background:#2778dd;color:#fff;height:34px;padding:0 13px;font-size:11px;font-weight:800;margin-top:8px;width:100%}
+.report-success strong{font-size:13px;color:#694704}
+.report-success p{font-size:11px;line-height:1.4;color:#536276;margin:5px 0 0}
+.summary-card #report-summary-button{background:#e9b632;color:#2b2208}
+@media(min-width:701px){.driver-mode .report-page{top:54px;display:grid;grid-template-columns:minmax(180px,1fr) minmax(190px,1fr);grid-template-rows:auto auto 1fr auto;column-gap:14px;align-items:stretch;padding:14px}.driver-mode .report-header,.driver-mode .report-intro{grid-column:1 / -1}.driver-mode .report-map{grid-column:1;grid-row:3 / 5;min-height:0}.driver-mode .report-legend{grid-column:2;grid-row:4;align-self:end}.driver-mode .report-form,.driver-mode .report-prompt{grid-column:2;grid-row:3;align-self:start}}
+@media(max-width:700px){.report-page{top:85px}.driver-mode .report-page{top:54px}}
+
+/* Keep the journey visible until the report is explicitly opened. */
+.phone .report-page[hidden]{display:none}
+.sheet-topline,.sheet-footer{justify-content:flex-end}
+.driver-mode .distance{margin-top:0}
