@@ -6,14 +6,13 @@
     <meta name="theme-color" content="#111318" />
     <meta name="description" content="Campus AR is an interactive junction guidance prototype for scooter riders and drivers." />
     <title>Campus AR — Junction guidance</title>
-    <link rel="stylesheet" href="./styles.css?v=20261110e" />
-    <link rel="stylesheet" href="./theme.css?v=20261110e" />
+    <link rel="stylesheet" href="./styles.css?v=20261110k" />
   </head>
   <body>
     <div class="workspace">
       <aside class="sidebar" aria-label="Prototype controls">
-        <div class="side-section"><div class="section-title">CHOOSE A JOURNEY</div><button class="persona active" data-persona="rider" aria-pressed="true"><span class="persona-icon">♢</span><span><strong>Scooter rider</strong><small>John · Continue straight</small></span><span class="persona-check">✓</span></button><button class="persona" data-persona="driver" aria-pressed="false"><span class="persona-icon car-icon">▰</span><span><strong>Car driver</strong><small>Mary · Turn right</small></span><span class="persona-check">✓</span></button></div>
-        <div class="demo-console desktop-demo-console" id="desktop-demo-console" aria-label="Presenter controls"></div><div class="side-section stages-section"><div id="stage-list" class="stage-list" aria-label="Journey stages"></div></div>
+        <div class="side-section"><div class="section-title">CHOOSE A JOURNEY</div><button class="persona active" data-persona="rider" aria-pressed="true"><span><strong>Scooter rider</strong><small>John · Continue straight</small></span><span class="persona-check">✓</span></button><button class="persona" data-persona="driver" aria-pressed="false"><span><strong>Car driver</strong><small>Mary · Turn right</small></span><span class="persona-check">✓</span></button></div>
+        <div class="demo-console desktop-demo-console" id="desktop-demo-console" aria-label="Presenter controls"></div>
         <div class="sidebar-footer"><span class="live-dot"></span> CS 6750</div>
       </aside>
 
@@ -21,17 +20,14 @@
         <header class="desktop-header"><h2 id="desktop-title">Junction guidance</h2></header>
         <div class="content-grid">
           <section class="phone-wrap" aria-label="Interactive app preview"><div class="phone-shadow"></div><div class="phone">
-            <div class="phone-status"><span>9:41</span><div class="status-icons"><span>▰▰▰</span><span>◕</span><span>▰</span></div></div>
-            <div class="app-top"><button class="icon-button" id="back-button" aria-label="Previous stage">←</button><button class="app-top-title" id="mode-button" aria-label="Change journey" aria-expanded="false"><strong id="app-name">Campus AR ⌄</strong></button></div><div class="mode-menu" id="mode-menu" hidden><button data-menu-persona="rider">◇ <span>Scooter rider</span></button><button data-menu-persona="driver">▰ <span>Car driver</span></button></div>
-            <div class="scene" id="scene"><div id="scene-art" class="scene-art"></div><div class="scene-shade"></div><div class="scene-header"><span class="scene-pill"><span class="live-dot"></span><span id="view-label">MAP VIEW</span></span></div><div id="scene-overlays" class="scene-overlays"></div><div id="feedback-toast" class="feedback-toast" role="status" aria-live="polite" hidden></div></div>
-            <div class="bottom-sheet is-collapsed" id="bottom-sheet"><div class="sheet-drag-area" id="sheet-drag-area" role="button" tabindex="0" aria-label="Expand guidance" aria-expanded="false" aria-controls="sheet-details"><div class="sheet-handle"></div><div class="maneuver"><div class="maneuver-icon" id="maneuver-icon">↑</div><div class="maneuver-copy"><h3 id="maneuver-title">Continue straight</h3><span class="distance" id="distance">30 m ahead</span></div></div></div><div class="sheet-details" id="sheet-details"><div class="advisory" id="advisory"><span id="advisory-text">Stop to view the AR guidance and potential traffic at this junction.</span></div><div class="choice-row" id="choice-row" aria-label="Choose a lane" hidden></div><div class="sheet-actions" id="sheet-actions"><button class="primary-button" id="primary-button">Open AR <span>↗</span></button><button class="next-button" id="secondary-button" hidden></button></div></div></div>
-            <div class="home-indicator"></div><div id="summary" class="summary" hidden></div>
-            <div class="report-entry" id="report-entry" hidden><button type="button" id="report-edge-button" class="report-edge-button" aria-expanded="false" aria-controls="report-entry-action" aria-label="Open conflict report shortcut">⚑</button><button type="button" id="report-entry-action" class="report-entry-action" hidden>Report a conflict zone <span>→</span></button></div>
+            <div class="app-top"><button class="icon-button" id="back-button" aria-label="Previous stage">←</button><div class="app-top-title"><strong>Campus AR</strong></div></div>
+            <div class="scene" id="scene"><div id="scene-art" class="scene-art"></div><div class="scene-shade"></div><div class="scene-header"><span class="scene-pill"><span id="view-label">MAP VIEW</span></span></div><div id="scene-overlays" class="scene-overlays"></div><div id="feedback-toast" class="feedback-toast" role="status" aria-live="polite" hidden></div></div>
+            <div class="bottom-sheet is-collapsed" id="bottom-sheet"><div class="sheet-drag-area" id="sheet-drag-area" role="button" tabindex="0" aria-label="Expand guidance" aria-expanded="false" aria-controls="sheet-details"><div class="sheet-handle"></div><div class="maneuver"><div class="maneuver-icon" id="maneuver-icon">↑</div><div class="maneuver-copy"><h3 id="maneuver-title">Continue straight</h3><span class="distance" id="distance">30 m ahead</span></div></div></div><div class="sheet-details" id="sheet-details"><div class="advisory" id="advisory"><span id="advisory-text">Stop to view the AR guidance and potential traffic at this junction.</span></div><div class="choice-row" id="choice-row" aria-label="Choose a lane" hidden></div><div class="sheet-actions" id="sheet-actions"><button class="primary-button" id="primary-button">Open AR <span>↗</span></button><button class="next-button" id="secondary-button" hidden></button></div><button type="button" class="report-sheet-button" id="report-entry-action" hidden>Report a conflict zone <span>→</span></button></div></div>
             <section id="report-page" class="report-page" aria-label="Report a conflict zone" hidden></section>
           </div></section><section class="demo-console mobile-demo-console" id="mobile-demo-console" aria-label="Presenter controls"></section>
         </div>
       </main>
     </div>
-    <script src="./script.js?v=20261110e"></script>
+    <script src="./script.js?v=20261110j"></script>
   </body>
 </html>

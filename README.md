@@ -18,7 +18,7 @@ Push this directory to a GitHub repository. In the repository's **Settings → P
 
 The empty `.nojekyll` file keeps GitHub Pages from processing the static files with Jekyll.
 
-When changing `script.js` or either stylesheet, update the `?v=` value on their links in `index.html` before publishing. This keeps a newly published page from loading older cached assets.
+When changing `script.js` or `styles.css`, update the `?v=` value on their links in `index.html` before publishing. This keeps a newly published page from loading older cached assets.
 
 ## Conflict zone reports
 

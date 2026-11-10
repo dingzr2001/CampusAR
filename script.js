@@ -15,7 +15,7 @@ const journeys = {
     {
       stage: "Red signal at the stop line",
       view: "AR VIEW · LIVE",
-      distance: "24 s remaining",
+      distance: "Signal red",
       icon: "●",
       title: "Red light ahead",
       advisory: "Check the signal and highlighted stop line.",
@@ -26,7 +26,7 @@ const journeys = {
     {
       stage: "Cross with care",
       view: "AR VIEW · LIVE",
-      distance: "17 s remaining",
+      distance: "Signal red",
       icon: "↑",
       title: "Continue straight",
       advisory:
@@ -52,7 +52,7 @@ const journeys = {
     {
       stage: "Red signal at the stop line",
       view: "AR VIEW · LIVE",
-      distance: "20 s remaining",
+      distance: "Signal red",
       icon: "●",
       title: "Red light ahead",
       advisory: "Check the signal, stop line, and exit crosswalk.",
@@ -80,31 +80,24 @@ function createJourneyState(persona) {
     persona,
     step: 0,
     distance: persona === "driver" ? 40 : 30,
-    visualDistance: null,
     stopped: false,
     lane: null,
-    remaining: 20,
-    hazardRemaining: 12,
     yielded: false,
     redCrossed: false,
     conflictCrossed: false,
     wrongLaneCrossed: false,
     errors: 0,
-    summary: false,
     feedback: null,
     sheetExpanded: false,
     sheetAutoOpened: false,
     reportOpen: false,
-    reportEntryExpanded: false,
     reportSelected: null,
     reportDraft: "",
     reportSubmitted: false,
   };
 }
 const state = createJourneyState("rider");
-let ticker = null;
 let feedbackTimeout = null;
-let motionFrame = null;
 const $ = (id) => document.getElementById(id);
 const setText = (id, value) => {
   $(id).textContent = value;
@@ -137,19 +130,19 @@ function mapRegion(region, report = false) {
   return `<g ${attrs}><rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${width.toFixed(1)}" height="${height.toFixed(1)}" rx="6"/><text x="${(x + width / 2).toFixed(1)}" y="${(y + height / 2 + 4).toFixed(1)}" text-anchor="middle">${region.label}</text>${report ? `<rect class="report-hit" x="${x - 10}" y="${y - 10}" width="${width + 20}" height="${height + 20}"/>` : ""}</g>`;
 }
 function reportedRiderRegions(quad) {
-  return reportRegions.filter((region) => hasReport(region.id) && !(region.id === "crossing" && state.step === 2 && state.hazardRemaining > 0)).map((region) => {
+  return reportRegions.filter((region) => hasReport(region.id)).map((region) => {
     const [x1, z1, x2, z2] = region.world;
     return quad(x1, x2, z1, z2, "#ffcf43", 'class="reported-ar-region" stroke="#ffe78e" stroke-width="2" opacity=".42"');
   }).join("");
 }
 function reportedDriverRegions(rect) {
-  return reportRegions.filter((region) => hasReport(region.id) && !(region.id === "exit" && state.step === 2 && state.hazardRemaining > 0)).map((region) => {
+  return reportRegions.filter((region) => hasReport(region.id)).map((region) => {
     const [x1, z1, x2, z2] = region.world;
     return rect(x1, z1, x2, z2, "#ffcf43", 'class="reported-ar-region" stroke="#ffe78e" stroke-width="2" opacity=".42"');
   }).join("");
 }
 function reportedNotice() {
-  if (state.distance > (state.persona === "driver" ? -10 : -4) || state.distance < -25 || nearStopLine() || (state.step === 2 && state.hazardRemaining > 0)) return "";
+  if (state.distance > (state.persona === "driver" ? -10 : -4) || state.distance < -25 || nearStopLine() || state.step === 2) return "";
   const relevant = reportRegions.find((region) => {
     if (!hasReport(region.id)) return false;
     if (state.persona === "rider" && state.step === 0) return true;
@@ -174,7 +167,6 @@ const CONFLICT_DISTANCE = {
 };
 const nearConflict = () =>
   state.step === 2 &&
-  state.hazardRemaining > 0 &&
   state.distance <= CONFLICT_DISTANCE[state.persona].warning &&
   state.distance >= CONFLICT_DISTANCE[state.persona].end;
 const approachLaneFocus = () => state.distance <= 30 && state.distance >= 0;
@@ -190,7 +182,7 @@ function riskMessage() {
   return "";
 }
 
-const defs = `<defs><pattern id="grass" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="#e7ebf0"/><circle cx="6" cy="8" r="2" fill="#cbd3db"/><circle cx="18" cy="19" r="2" fill="#cbd3db"/></pattern><pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" fill="#ed435783"/><path d="M0 0V9" stroke="#d92842" stroke-width="3"/></pattern><filter id="shadow"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#101318" flood-opacity=".23"/></filter></defs>`;
+const defs = `<defs><pattern id="grass" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="#e7ebf0"/></pattern><pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" fill="#ed435783"/><path d="M0 0V9" stroke="#d92842" stroke-width="3"/></pattern><filter id="shadow"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#101318" flood-opacity=".23"/></filter></defs>`;
 const bike = (x, y, scale = 1) =>
   `<g transform="translate(${x} ${y}) scale(${scale})" fill="none" stroke="#151a23" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="-18" cy="8" r="10" fill="#f7f9fc"/><circle cx="18" cy="8" r="10" fill="#f7f9fc"/><path d="M-18 8L-5-11L7 8H-18M7 8L18 8L7-9H-3M-5-11H-12M7-9H15"/></g>`;
 function mapArt(report = false) {
@@ -236,14 +228,13 @@ function mapArt(report = false) {
     ${report && state.persona === "driver" ? '<path d="M180 460V350Q180 230 300 230H355" fill="none" stroke="#65b9ff" stroke-width="10" stroke-dasharray="17 11" opacity=".9"/>' : ""}
     ${nearStopLine() ? '<path d="M247.5 350H270" stroke="#f44560" stroke-width="8" filter="url(#shadow)"/><path d="M247.5 350H270" stroke="#fff" stroke-width="3"/>' : ""}
     ${report ? "" : `<circle cx="258.75" cy="${markerY}" r="24" fill="#ffffff" filter="url(#shadow)"/><circle cx="258.75" cy="${markerY}" r="15" fill="#397fe6"/>${bike(258.75, markerY - 3, 0.44)}`}
-    <circle cx="299" cy="339" r="25" fill="#ffffff" filter="url(#shadow)"/>
-    <path d="M299 326v13l8 8" fill="none" stroke="#3e5e83" stroke-width="3" stroke-linecap="round"/></svg>`;
+    </svg>`;
 }
 
 // Project a lane-level world into the rider's camera. World z=0 is the near stop
 // line; the crossing ends at z=22. The camera follows the bike route across it.
 function riderCamera() {
-  const travelled = -(state.visualDistance ?? state.distance);
+  const travelled = -state.distance;
   const t = Math.max(0, Math.min(1, travelled / 22));
   const eased = t * t * (3 - 2 * t);
   return { z: travelled - 5, x: 4.8125 - 8.25 * eased };
@@ -326,7 +317,7 @@ function riderSceneArt(green = false) {
       : "";
   const oppositeStop = near < 25 ? `${band(-5.5, -4.125, 25, "#fff")}${band(-2.75, 1.375, 25, "#fff")}` : "";
   const conflict =
-    green && state.hazardRemaining > 0
+    green
       ? quad(
           -3.2,
           4.2,
@@ -336,14 +327,8 @@ function riderSceneArt(green = false) {
           'data-conflict="true" stroke="#e44357" stroke-width="2.5"',
         )
       : "";
-  const [carFromX, carY] = riderProject(-9, 9);
-  const [carToX] = riderProject(10, 9);
-  const crossingCar =
-    green && state.hazardRemaining > 0
-      ? `<g class="traffic-car" style="--car-from-x:${carFromX}px;--car-to-x:${carToX}px;--car-y:${carY}px;animation-delay:-${12 - state.hazardRemaining}s" filter="url(#shadow)"><rect x="-17" y="-9" width="34" height="17" rx="5" fill="#1c2635" stroke="#fff" stroke-width="2.5"/><circle cx="-10" cy="9" r="3" fill="#fff" stroke="#1c2635" stroke-width="1.5"/><circle cx="10" cy="9" r="3" fill="#fff" stroke="#1c2635" stroke-width="1.5"/></g>`
-      : "";
   const signalLight = green ? "#59ad69" : "#eb3c53";
-  const signalHud = `<g filter="url(#shadow)"><rect x="303" y="78" width="7" height="79" rx="3" fill="#65707d"/><rect x="289" y="82" width="34" height="62" rx="9" fill="#171c25" stroke="#fff" stroke-width="3"/>${nearStopLine() && !green ? '<circle cx="306" cy="98" r="14" fill="#f43e59" opacity=".42"/>' : ""}<circle cx="306" cy="98" r="${nearStopLine() && !green ? 9 : 7}" fill="${green ? "#4b5563" : signalLight}"/><circle cx="306" cy="117" r="7" fill="${green ? signalLight : "#4b5563"}"/></g>${!green ? `<g class="signal-countdown" role="img" aria-label="${state.remaining} seconds remaining"><rect x="284" y="159" width="44" height="29" rx="10" fill="#fff" stroke="#d5deeb" stroke-width="2"/><text x="306" y="180" text-anchor="middle" font-size="18" font-weight="800" fill="#1c2634">${state.remaining}</text></g>` : ""}`;
+  const signalHud = `<g filter="url(#shadow)"><rect x="303" y="78" width="7" height="79" rx="3" fill="#65707d"/><rect x="289" y="82" width="34" height="62" rx="9" fill="#171c25" stroke="#fff" stroke-width="3"/>${nearStopLine() && !green ? '<circle cx="306" cy="98" r="14" fill="#f43e59" opacity=".42"/>' : ""}<circle cx="306" cy="98" r="${nearStopLine() && !green ? 9 : 7}" fill="${green ? "#4b5563" : signalLight}"/><circle cx="306" cy="117" r="7" fill="${green ? signalLight : "#4b5563"}"/></g>${!green ? `<g class="signal-countdown" role="img" aria-label="Red signal, 20 seconds"><rect x="284" y="159" width="44" height="29" rx="10" fill="#fff" stroke="#d5deeb" stroke-width="2"/><text x="306" y="180" text-anchor="middle" font-size="18" font-weight="800" fill="#1c2634">20</text></g>` : ""}`;
   return `<svg viewBox="0 0 360 430" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Bike-lane camera moving across the highlighted junction markings"><defs><pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" fill="#ffe1e6" opacity=".55"/><path d="M0 0V9" stroke="#e44357" stroke-width="3" opacity=".8"/></pattern><filter id="lane-glow" x="-60%" y="-100%" width="220%" height="300%"><feGaussianBlur stdDeviation="5"/></filter><filter id="shadow"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#111318" flood-opacity=".3"/></filter></defs>
     <rect width="360" height="430" fill="#dce3eb"/>
     ${quad(-7.4, 7.4, near, far, "#c8d0da")}
@@ -355,7 +340,7 @@ function riderSceneArt(green = false) {
     ${markings}${crosswalk}
     ${stripe(2.75, -100, 0, laneWidth, "#9bdbff")}${stripe(4.125, -100, 0, 0.1, "#bedaff")}${stripe(5.5, -100, 0, laneWidth, "#9bdbff")}
     ${stripe(-5.5, 22, 120, 0.13, "#77c6ff")}${stripe(-4.125, 22, 120, 0.1, "#bedaff")}${stripe(-2.75, 22, 120, 0.13, "#77c6ff")}
-    ${crossingFill}${crossingEdges}${route}${reportedRiderRegions(quad)}${conflict}${crossingCar}${oppositeStop}${stop}${signalHud}
+    ${crossingFill}${crossingEdges}${route}${reportedRiderRegions(quad)}${conflict}${oppositeStop}${stop}${signalHud}
     <path d="M180 391l-11 18h22z" fill="#2783f2" stroke="#fff" stroke-width="2" filter="url(#shadow)"/>
   </svg>`;
 }
@@ -384,7 +369,7 @@ function driverPath(progress) {
   };
 }
 function driverCamera() {
-  const progress = -(state.visualDistance ?? state.distance);
+  const progress = -state.distance;
   const position = driverPath(progress - 5);
   return { ...position, heading: driverPath(progress).heading };
 }
@@ -446,7 +431,7 @@ function driverSceneArt() {
       p.z - Math.sin(p.heading) * offset,
     ];
   };
-  const begin = -(state.visualDistance ?? state.distance) - 2;
+  const begin = -state.distance - 2;
   const routeA = [],
     routeB = [],
     routeMiddle = [];
@@ -522,7 +507,7 @@ function driverSceneArt() {
       `stroke="${nearStopLine() ? "#e92746" : "#1784e7"}" stroke-width="${nearStopLine() ? 2.6 : 1.6}"`,
     );
   const conflict =
-    green && state.hazardRemaining > 0
+    green
       ? rect(
           11.4,
           12,
@@ -532,7 +517,7 @@ function driverSceneArt() {
           'data-conflict="true" stroke="#e44357" stroke-width="2"',
         )
       : "";
-  const signal = `<g filter="url(#driver-shadow)"><rect x="473" y="46" width="7" height="91" rx="3" fill="#5b6571"/><rect x="457" y="49" width="36" height="68" rx="9" fill="#171c25" stroke="#fff" stroke-width="3"/>${nearStopLine() && !green ? '<circle cx="475" cy="67" r="14" fill="#f43e59" opacity=".45"/>' : ""}<circle cx="475" cy="67" r="${nearStopLine() && !green ? 9 : 7}" fill="${green ? "#48515b" : "#e93950"}"/><circle cx="475" cy="90" r="7" fill="${green ? "#56b36b" : "#48515b"}"/></g>${!green ? `<g class="signal-countdown" role="img" aria-label="${state.remaining} seconds remaining"><rect x="452" y="140" width="46" height="27" rx="9" fill="#fff" stroke="#d5deeb" stroke-width="2"/><text x="475" y="160" text-anchor="middle" font-size="17" font-weight="800" fill="#1c2634">${state.remaining}</text></g>` : ""}`;
+  const signal = `<g filter="url(#driver-shadow)"><rect x="473" y="46" width="7" height="91" rx="3" fill="#5b6571"/><rect x="457" y="49" width="36" height="68" rx="9" fill="#171c25" stroke="#fff" stroke-width="3"/>${nearStopLine() && !green ? '<circle cx="475" cy="67" r="14" fill="#f43e59" opacity=".45"/>' : ""}<circle cx="475" cy="67" r="${nearStopLine() && !green ? 9 : 7}" fill="${green ? "#48515b" : "#e93950"}"/><circle cx="475" cy="90" r="7" fill="${green ? "#56b36b" : "#48515b"}"/></g>${!green ? `<g class="signal-countdown" role="img" aria-label="Red signal, 20 seconds"><rect x="452" y="140" width="46" height="27" rx="9" fill="#fff" stroke="#d5deeb" stroke-width="2"/><text x="475" y="160" text-anchor="middle" font-size="17" font-weight="800" fill="#1c2634">20</text></g>` : ""}`;
   return `<svg viewBox="0 0 520 350" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Car lane camera following the highlighted right turn and exit lane"><defs><filter id="driver-glow" x="-60%" y="-100%" width="220%" height="300%"><feGaussianBlur stdDeviation="5"/></filter><filter id="driver-shadow"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#111318" flood-opacity=".3"/></filter><pattern id="driver-hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="9" height="9" fill="#ffe2e7" opacity=".55"/><path d="M0 0V9" stroke="#e44357" stroke-width="3" opacity=".8"/></pattern></defs>
     <rect width="520" height="350" fill="#dce3eb"/>
     ${rect(-100, -110, 170, 150, "#c8d0da")}
@@ -575,19 +560,6 @@ function renderFeedback() {
     toast.textContent = state.feedback.message;
   }
 }
-function clearTicker() {
-  if (ticker) {
-    clearInterval(ticker);
-    ticker = null;
-  }
-}
-function clearMotion() {
-  if (motionFrame) {
-    cancelAnimationFrame(motionFrame);
-    motionFrame = null;
-  }
-  state.visualDistance = null;
-}
 function riskMarker(kind, x, y, width, height) {
   if (y < 55 || y > height - 8) return "";
   const left = Math.max(6, Math.min(94, (x / width) * 100)),
@@ -602,7 +574,6 @@ function driverRiskMarker(kind, x, z, offsetX = 0, offsetY = 0) {
 }
 function riderMapOverlays() {
   return (
-    `<button type="button" class="overlay left" data-hint="0" style="top:55%">Motor lane</button><button type="button" class="overlay lane-label right" data-hint="1" style="top:70%">Current bike lane</button><button type="button" class="overlay lane-label left" data-hint="2" style="top:27%">Far-side bike lane</button>` +
     (nearStopLine() ? riskMarker("stop", 222, 284, 360, 430) : "")
   );
 }
@@ -660,79 +631,17 @@ function driverOverlays() {
     `<button type="button" class="overlay lane-label center" data-hint="2" style="top:69%;left:50%">${state.distance <= -20 ? "Exit lane" : "Right-turn path"}</button>`
   );
 }
-function animateCamera(from, to) {
-  clearMotion();
-  state.visualDistance = from;
-  const started = performance.now(),
-    duration = 680;
-  const frame = (now) => {
-    const t = Math.min(1, (now - started) / duration),
-      ease = t * t * (3 - 2 * t);
-    state.visualDistance = from + (to - from) * ease;
-    if (state.step > 0 || state.persona === "driver") {
-      $("scene-art").innerHTML = art[journeys[state.persona][state.step].art]();
-      $("scene-overlays").innerHTML =
-        (state.persona === "driver" ? driverOverlays() : riderOverlays()) + reportedNotice();
-    }
-    if (t < 1) motionFrame = requestAnimationFrame(frame);
-    else {
-      motionFrame = null;
-      state.visualDistance = null;
-      render();
-    }
-  };
-  motionFrame = requestAnimationFrame(frame);
-}
 function resetJourney(persona = state.persona) {
-  clearTicker();
-  clearMotion();
   clearTimeout(feedbackTimeout);
   Object.assign(state, createJourneyState(persona));
-  $("mode-menu").hidden = true;
-  $("mode-button").setAttribute("aria-expanded", "false");
   render();
 }
 function enterStep(step) {
-  clearTicker();
-  clearMotion();
   clearTimeout(feedbackTimeout);
   state.feedback = null;
   state.step = step;
-  state.summary = false;
-  if (step === 1) {
-    state.remaining = 20;
-  }
-  if (step === 2) {
-    state.hazardRemaining = 12;
-    state.yielded = false;
-  }
+  if (step === 2) state.yielded = false;
   render();
-  if (step === 2 && state.distance <= -50) {
-    state.summary = true;
-    render();
-    return;
-  }
-  if (step === 1 || step === 2)
-    ticker = setInterval(() => {
-      if (state.step === 1) {
-        state.remaining--;
-        if (state.remaining <= 0) {
-          enterStep(2);
-          return;
-        }
-        render();
-      } else if (state.step === 2) {
-        state.hazardRemaining = Math.max(0, state.hazardRemaining - 1);
-        if (!state.reportOpen) render();
-        if (state.hazardRemaining === 0) {
-          clearTicker();
-          showFeedback(
-            "Conflict zone clear. Check your surroundings, then proceed.",
-            "success",
-          );
-        }
-      }
-    }, 1000);
 }
 function actionPrimary() {
   if (state.step === 0) {
@@ -758,41 +667,17 @@ function actionPrimary() {
   }
 }
 function actionSecondary() {
-  if (state.step === 0) {
-    if (state.persona === "rider") {
-      showFeedback(
-        "Open AR while approaching. Stop only for the red signal and stop line.",
-        "info",
-      );
-      return;
-    }
-    showFeedback(
-      "For a right turn, select the lane beside the bike lane.",
-      "info",
-    );
-    return;
-  }
-  if (state.step === 1) {
-    showFeedback("The signal is red. The stop line marks the approach to the junction.", "info");
-    return;
-  }
   if (state.step === 2) {
     state.yielded = true;
-    showFeedback(
-      state.hazardRemaining > 0
-        ? "Good choice. Wait for the crossing to clear."
-        : "The crossing is clear. Check once more, then proceed.",
-      "success",
-    );
+    showFeedback("Good choice. Wait for the crossing to clear.", "success");
   }
 }
 function demoMove() {
-  if (state.summary) return;
   const from = state.distance;
   const next = Math.max(-50, from - 10);
   if (next === from) {
     showFeedback(
-      "Journey endpoint reached. Review the crossing feedback.",
+      "Journey endpoint reached.",
       "info",
     );
     return;
@@ -813,7 +698,6 @@ function demoMove() {
   }
   if (
     state.step === 2 &&
-    state.hazardRemaining > 0 &&
     from > CONFLICT_DISTANCE[state.persona].crossed &&
     next <= CONFLICT_DISTANCE[state.persona].crossed &&
     !state.conflictCrossed
@@ -822,7 +706,6 @@ function demoMove() {
     state.errors++;
   }
   render();
-  if (state.step > 0 || state.persona === "driver") animateCamera(from, next);
   const warning = riskMessage();
   if (state.wrongLaneCrossed && wasApproach)
     showFeedback(
@@ -836,21 +719,6 @@ function demoMove() {
       `${next} m to the junction. Solid lane boundaries are highlighted.`,
       "info",
     );
-  else if (state.step === 2 && state.hazardRemaining === 0)
-    showFeedback(
-      "Crossing clear. Continue along the highlighted lane.",
-      "success",
-    );
-  if (state.step === 2 && state.distance === -50) {
-    setTimeout(() => {
-      if (state.step === 2 && state.distance === -50) {
-        clearTicker();
-        clearMotion();
-        state.summary = true;
-        render();
-      }
-    }, 720);
-  }
 }
 function demoStop() {
   state.stopped = !state.stopped;
@@ -875,17 +743,13 @@ function renderDemoControls() {
       : state.step === 1
         ? "Red light"
         : "Green light";
-  const html = `<div class="demo-head"><span>PRESENTER CONTROLS</span><span class="demo-stage">${stage}</span></div><div class="demo-location">${location} <span>· ${state.stopped ? "Stopped" : "Moving"}</span></div><div class="demo-actions"><button type="button" class="demo-move" data-demo-action="move" ${state.summary ? "disabled" : ""}>Move +10 m <span>→</span></button><button type="button" data-demo-action="stop">${state.stopped ? "Resume" : "Stop"}</button><button type="button" data-demo-action="signal" ${state.step !== 1 ? "disabled" : ""}>Green light</button><button type="button" data-demo-action="reset">Reset</button></div>`;
+  const html = `<div class="demo-head"><span>PRESENTER CONTROLS</span><span class="demo-stage">${stage}</span></div><div class="demo-location">${location} <span>· ${state.stopped ? "Stopped" : "Moving"}</span></div><div class="demo-actions"><button type="button" class="demo-move" data-demo-action="move" ${state.distance <= -50 ? "disabled" : ""}>Move +10 m <span>→</span></button><button type="button" data-demo-action="stop">${state.stopped ? "Resume" : "Stop"}</button><button type="button" data-demo-action="signal" ${state.step !== 1 ? "disabled" : ""}>Green light</button><button type="button" data-demo-action="reset">Reset</button></div>`;
   $("desktop-demo-console").innerHTML = html;
   $("mobile-demo-console").innerHTML = html;
 }
 function renderReportPage() {
-  const available = state.distance <= -20 || state.summary;
-  const entry = $("report-entry");
-  entry.hidden = !available || state.reportOpen;
-  $("report-edge-button").hidden = state.reportEntryExpanded;
-  $("report-entry-action").hidden = !state.reportEntryExpanded;
-  $("report-edge-button").setAttribute("aria-expanded", String(state.reportEntryExpanded));
+  const available = state.distance <= -20;
+  $("report-entry-action").hidden = !available || state.reportOpen;
   const page = $("report-page");
   page.hidden = !state.reportOpen;
   if (!state.reportOpen) return;
@@ -899,10 +763,8 @@ function renderReportPage() {
     ${state.reportSubmitted ? `<div class="report-form report-success" role="status"><strong>Report saved</strong><p>${escapeHtml(region?.label || "Conflict zone")} will appear as a steady yellow warning in the map and AR views on the next run.</p><button type="button" id="report-replay">Run this journey again</button></div>` : region ? `<form id="report-form" class="report-form"><span class="report-form-kicker">SELECTED AREA</span><h3>${escapeHtml(region.label)}</h3><label for="report-description">Briefly describe what happened</label><textarea id="report-description" name="description" maxlength="240" rows="3" placeholder="For example: a turning car passed close to the bike crossing" required>${escapeHtml(state.reportDraft || reports[region.id]?.description || "")}</textarea><button type="submit">Submit report</button></form>` : `<div class="report-prompt">Select one of the highlighted areas above to describe what happened.</div>`}`;
 }
 function openReport() {
-  if (state.distance > -20 && !state.summary) return;
-  clearMotion();
+  if (state.distance > -20) return;
   state.reportOpen = true;
-  state.reportEntryExpanded = false;
   state.reportSelected = null;
   state.reportDraft = "";
   state.reportSubmitted = false;
@@ -923,12 +785,6 @@ function render() {
     btn.classList.toggle("active", active);
     btn.setAttribute("aria-pressed", String(active));
   });
-  $("stage-list").innerHTML = journeys[state.persona]
-    .map(
-      (stage, i) =>
-        `<button class="stage-item ${i === state.step ? "active" : ""}" data-step="${i}" ${i === state.step ? 'aria-current="step"' : ""}><span class="stage-number">0${i + 1}</span><strong>${stage.stage}</strong></button>`,
-    )
-    .join("");
   setText(
     "desktop-title",
     driver ? "Driver junction simulator" : "Scooter junction simulator",
@@ -938,7 +794,6 @@ function render() {
   setText("maneuver-title", item.title);
   renderGuidance(item, driver);
   renderScene(item, driver);
-  renderSummary(driver);
   renderDemoControls();
   renderReportPage();
   renderFeedback();
@@ -958,7 +813,6 @@ function renderGuidance(item, driver) {
     distance = formatApproachDistance();
     if (driver) {
       primary = "Check lane";
-      secondary = "Help";
       advisory = nearStopLine()
         ? riskMessage()
         : state.lane === "right"
@@ -976,7 +830,6 @@ function renderGuidance(item, driver) {
   } else if (state.step === 1) {
     distance = state.distance > 0 ? `${state.distance} m to line` : state.distance === 0 ? "At stop line" : "Past stop line";
     primary = "";
-    secondary = driver ? "Why wait?" : "";
     advisory = nearStopLine()
       ? riskMessage()
       : driver
@@ -987,25 +840,14 @@ function renderGuidance(item, driver) {
       setText("maneuver-title", "Stop line crossed");
     }
   } else {
-    distance =
-      state.hazardRemaining > 0
-        ? `Occupied · ${state.hazardRemaining}s`
-        : "Crossing clear";
+    distance = "Occupied";
     primary = driver ? "Continue driving" : "Continue riding";
     secondary = "Yield";
     advisory = nearConflict()
       ? riskMessage()
-      : state.hazardRemaining > 0
-        ? driver
-          ? "Pedestrian is using the exit crosswalk. Check before turning."
-          : "Turning traffic is crossing the bike route. Check ahead."
-        : driver
-          ? state.distance <= -20
-            ? "Continue in the highlighted exit lane."
-            : "Crosswalk clear. Check again, then follow the right turn."
-          : state.distance <= -22
-            ? "Continue in the far-side bike lane."
-            : "Conflict area is clear. Check again, then follow the crossing.";
+      : driver
+        ? "Pedestrian is using the exit crosswalk. Check before turning."
+        : "Turning traffic is crossing the bike route. Check ahead.";
     advisoryType = nearConflict() ? "danger" : "";
     if (!driver && state.distance <= -22) {
       setText("maneuver-title", "Stay in bike lane");
@@ -1048,10 +890,6 @@ function renderScene(item, driver) {
   $("scene")
     .closest(".phone")
     .classList.toggle("risk-active", stopRisk || conflictRisk);
-  $("scene").classList.toggle(
-    "hazard-cleared",
-    state.step === 2 && state.hazardRemaining === 0,
-  );
   $("scene-overlays").innerHTML = (driver
     ? driverOverlays()
     : state.step > 0
@@ -1059,26 +897,6 @@ function renderScene(item, driver) {
       : riderMapOverlays()) + reportedNotice();
   $("back-button").disabled = state.step === 0;
   $("back-button").style.opacity = state.step === 0 ? ".35" : "1";
-}
-function renderSummary(driver) {
-  $("summary").hidden = !state.summary || state.reportOpen;
-  if (state.summary) {
-    const first = driver
-      ? state.wrongLaneCrossed
-        ? "Lane choice prompted a warning"
-        : "Selected the right-turn lane"
-      : "Followed the bike lane toward the junction";
-    const second = state.redCrossed
-      ? "Crossed the stop line on red"
-      : "Checked the red signal";
-    const third = state.conflictCrossed
-      ? "Entered an occupied conflict zone"
-      : state.yielded
-        ? "Yielded at the conflict zone"
-        : "Continued after the conflict cleared";
-    $("summary").innerHTML =
-        `<div class="summary-card" role="dialog" aria-modal="true" aria-labelledby="summary-title"><div class="summary-kicker">JOURNEY COMPLETE</div><h2 id="summary-title">You made it through.</h2><p>Review the feedback from this crossing.</p><div class="summary-line"><span>01</span>${first}</div><div class="summary-line"><span>02</span>${second}</div><div class="summary-line"><span>03</span>${third}</div><div class="summary-note">${state.errors ? `${state.errors} risk alert${state.errors === 1 ? "" : "s"} appeared during this run. Try again to compare.` : "No risk alerts in this run."}</div><button id="report-summary-button">Report a conflict zone</button><button id="replay-button">Replay journey</button><button id="switch-button">Try ${driver ? "scooter rider" : "car driver"} scenario</button></div>`;
-  }
 }
 function renderSheet() {
   const rider = state.persona === "rider";
@@ -1187,12 +1005,7 @@ $("scene-overlays").addEventListener("click", (e) => {
     return;
   }
   if (state.step === 2 && index === 1) {
-    showFeedback(
-      state.hazardRemaining > 0
-        ? "This red zone overlaps your route. Yield until it clears."
-        : "The conflict zone has cleared. Check once more before moving.",
-      state.hazardRemaining > 0 ? "danger" : "success",
-    );
+    showFeedback("This red zone overlaps your route. Yield and check before moving.", "danger");
     return;
   }
   showFeedback(
@@ -1203,36 +1016,11 @@ $("scene-overlays").addEventListener("click", (e) => {
       : "This label identifies the road area in the AR view.",
   );
 });
-$("stage-list").addEventListener("click", (e) => {
-  const b = e.target.closest("[data-step]");
-  if (b) enterStep(Number(b.dataset.step));
-});
 document
   .querySelectorAll(".persona")
   .forEach((b) =>
     b.addEventListener("click", () => resetJourney(b.dataset.persona)),
   );
-document
-  .querySelectorAll("[data-menu-persona]")
-  .forEach((b) =>
-    b.addEventListener("click", () => resetJourney(b.dataset.menuPersona)),
-  );
-$("mode-button").addEventListener("click", () => {
-  const menu = $("mode-menu");
-  menu.hidden = !menu.hidden;
-  $("mode-button").setAttribute("aria-expanded", String(!menu.hidden));
-});
-$("summary").addEventListener("click", (e) => {
-  if (e.target.id === "report-summary-button") openReport();
-  if (e.target.id === "replay-button") resetJourney();
-  if (e.target.id === "switch-button")
-    resetJourney(state.persona === "rider" ? "driver" : "rider");
-});
-$("report-edge-button").addEventListener("click", () => {
-  state.reportEntryExpanded = !state.reportEntryExpanded;
-  renderReportPage();
-  $(state.reportEntryExpanded ? "report-entry-action" : "report-edge-button").focus();
-});
 $("report-entry-action").addEventListener("click", openReport);
 $("report-page").addEventListener("click", (event) => {
   if (event.target.closest("#report-close")) {
@@ -1269,17 +1057,5 @@ $("report-page").addEventListener("submit", (event) => {
   state.reportSubmitted = true;
   state.reportDraft = description;
   renderReportPage();
-});
-document.addEventListener("click", (e) => {
-  if (!e.target.closest("#mode-button") && !e.target.closest("#mode-menu")) {
-    $("mode-menu").hidden = true;
-    $("mode-button").setAttribute("aria-expanded", "false");
-  }
-});
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
-    $("mode-menu").hidden = true;
-    $("mode-button").setAttribute("aria-expanded", "false");
-  }
 });
 render();
