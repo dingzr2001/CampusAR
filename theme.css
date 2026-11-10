@@ -370,7 +370,6 @@ button:focus-visible {
     0 0 16px #f33b5577;
   z-index: 21;
   pointer-events: none;
-  animation: risk-edge-flash 1s ease-in-out infinite;
 }
 .overlay.signal-urgent,
 .overlay.stop-urgent {
@@ -380,7 +379,6 @@ button:focus-visible {
   box-shadow:
     0 0 0 4px #f33b5559,
     0 7px 20px #11182733;
-  animation: risk-cue-pulse 1s ease-in-out infinite;
 }
 .risk-marker {
   position: absolute;
@@ -401,35 +399,6 @@ button:focus-visible {
     0 4px 15px #6e11289c;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  animation: risk-cue-pulse 1s ease-in-out infinite;
-}
-@keyframes risk-edge-flash {
-  0%,
-  100% {
-    opacity: 0.95;
-  }
-  50% {
-    opacity: 0.28;
-  }
-}
-@keyframes risk-cue-pulse {
-  0%,
-  100% {
-    filter: brightness(1);
-    scale: 1;
-  }
-  50% {
-    filter: brightness(1.25);
-    scale: 1.1;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .phone.risk-active::after,
-  .overlay.signal-urgent,
-  .overlay.stop-urgent,
-  .risk-marker {
-    animation: none;
-  }
 }
 .moving-actor svg {
   width: 100%;
@@ -846,7 +815,7 @@ body:not(.driver-mode) .bottom-sheet.is-dragging .sheet-details {
   }
 }
 
-/* Saved conflict reports stay yellow and never use the active red warning animation. */
+/* Saved conflict reports stay yellow; active risk warnings stay red. */
 .reported-map-region rect {
   fill: #ffd24775;
   stroke: #f4ae19;
