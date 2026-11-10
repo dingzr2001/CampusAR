@@ -305,11 +305,16 @@ button:focus-visible {
   flex: none;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 0 13px;
   background: #f9fbf9;
   box-shadow: 0 1px 0 #d8e6e0;
   z-index: 4;
+  position: relative;
+}
+.app-top > .icon-button {
+  position: absolute;
+  left: 13px;
 }
 .icon-button {
   width: 34px;
@@ -324,13 +329,6 @@ button:focus-visible {
 }
 .icon-button:hover {
   background: #ebf1ed;
-}
-.sound-button {
-  font-size: 16px;
-  font-weight: 700;
-}
-.sound-button.muted {
-  color: #9fb1ad;
 }
 .app-top-title {
   text-align: center;
@@ -592,14 +590,6 @@ button:focus-visible {
 }
 .next-button:hover {
   background: #dcebe0;
-}
-.sheet-footer {
-  display: flex;
-  justify-content: space-between;
-  color: #829891;
-  font-size: 9px;
-  margin-top: 10px;
-  padding: 0 1px;
 }
 .footer-indicator {
   display: inline-block;
@@ -1015,10 +1005,6 @@ kbd {
   height: 42px;
   width: 42px;
 }
-.driver-mode .sheet-footer {
-  color: #a9c6bd;
-  margin-top: 14px;
-}
 .driver-mode .overlay {
   font-size: 11px;
   max-width: 136px;
@@ -1088,8 +1074,5 @@ kbd {
   .driver-mode .advisory {
     margin-top: 9px;
     min-height: 0;
-  }
-  .driver-mode .sheet-footer {
-    margin-top: 8px;
   }
 }

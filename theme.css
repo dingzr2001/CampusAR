@@ -223,9 +223,6 @@ button:focus-visible {
 .summary[hidden] {
   display: none;
 }
-.sheet-footer {
-  color: #798597;
-}
 .home-indicator:after {
   background: #15191f;
 }
@@ -527,8 +524,7 @@ button:focus-visible {
   color: #8bbcff;
 }
 .driver-mode .distance,
-.driver-mode .maneuver p,
-.driver-mode .sheet-footer {
+.driver-mode .maneuver p {
   color: #b0bbcb;
 }
 .driver-mode .maneuver h3 {
@@ -1129,9 +1125,6 @@ body:not(.driver-mode) .bottom-sheet.is-dragging .sheet-details {
 /* Keep the journey visible until the report is explicitly opened. */
 .phone .report-page[hidden] {
   display: none;
-}
-.sheet-footer {
-  justify-content: flex-end;
 }
 .maneuver-copy {
   min-width: 0;

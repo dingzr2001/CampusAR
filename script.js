@@ -2,151 +2,106 @@ const journeys = {
   rider: [
     {
       stage: "Approach the junction",
-      detail:
-        "John can open AR while rolling toward the junction. The route stays aligned with the bike lane.",
-      insight:
-        "The bike lane starts on the near right and crosses diagonally to the far-left side after the junction.",
       view: "MAP VIEW",
-      route: "NEXT MANEUVER",
       distance: "30 m ahead",
       icon: "↑",
       title: "Continue straight",
-      subtitle: "Approaching the campus junction",
       advisory:
         "Open AR as you approach to see the bike lane and crossing markings.",
       advisoryType: "",
       action: "Open AR",
-      status: "Route active",
       art: "map",
-      overlays: [],
     },
     {
       stage: "Red signal at the stop line",
-      detail:
-        "AR remains open while John approaches the red light. The stop line and bike lane edges stay highlighted as the view moves.",
-      insight:
-        "The camera sits in the right-side bike lane. The diagonal crossing leads to the bike lane beyond the junction.",
       view: "AR VIEW · LIVE",
-      route: "TRAFFIC SIGNAL",
       distance: "24 s remaining",
       icon: "●",
       title: "Red light ahead",
-      subtitle: "Stop line highlighted",
       advisory: "Check the signal and highlighted stop line.",
       advisoryType: "alert",
       action: "",
-      status: "Red signal",
       art: "riderWait",
-      overlays: [],
     },
     {
       stage: "Cross with care",
-      detail:
-        "The camera follows John across the diagonal bike crossing, then keeps moving in the far-side bike lane.",
-      insight:
-        "The highlighted crossing shifts the camera from the near-right bike lane to the far-left bike lane. Ride beyond the junction to finish.",
       view: "AR VIEW · LIVE",
-      route: "PROCEED WITH CAUTION",
       distance: "17 s remaining",
       icon: "↑",
       title: "Continue straight",
-      subtitle: "Watch for turning traffic",
       advisory:
         "Caution: turning traffic may cross your path. Check the highlighted conflict zone.",
       advisoryType: "danger",
       action: "Check crossing",
-      status: "Green signal",
       art: "riderGo",
-      overlays: [],
     },
   ],
   driver: [
     {
       stage: "Find the correct lane",
-      detail:
-        "The camera stays in Mary’s right-turn lane as she approaches the junction. Lane edges and the stop line grow clearer ahead.",
-      insight:
-        "The highlighted right-turn lane runs beside, but remains separate from, the bike lane.",
       view: "AR VIEW · LIVE",
-      route: "LANE GUIDANCE",
       distance: "40 m ahead",
       icon: "↱",
       title: "Use right-turn lane",
-      subtitle: "Right turn at the junction",
       advisory:
         "Stay in the highlighted lane. The bike lane is immediately to your right.",
       advisoryType: "",
       action: "Check lane",
-      status: "Route active",
       art: "driverLane",
-      overlays: [],
     },
     {
       stage: "Red signal at the stop line",
-      detail:
-        "The AR view remains aligned with the car lane at the red light, highlighting the stop line and exit crosswalk.",
-      insight: "The stop line shows where Mary encounters the red signal before turning.",
       view: "AR VIEW · LIVE",
-      route: "TRAFFIC SIGNAL",
       distance: "20 s remaining",
       icon: "●",
       title: "Red light ahead",
-      subtitle: "Right-turn stop line highlighted",
       advisory: "Check the signal, stop line, and exit crosswalk.",
       advisoryType: "alert",
       action: "",
-      status: "Red signal",
       art: "driverRed",
-      overlays: [],
     },
     {
       stage: "Make the right turn",
-      detail:
-        "The camera follows the right turn into the exit lane and continues beyond the intersection.",
-      insight:
-        "Lane edges bend with the route. The marked exit crosswalk is a conflict zone until it clears.",
       view: "AR VIEW · LIVE",
-      route: "NEXT MANEUVER",
       distance: "Crossing ahead",
       icon: "↱",
       title: "Make right turn",
-      subtitle: "Yield where paths intersect",
       advisory:
         "Check the conflict zone for pedestrians and cyclists before completing the turn.",
       advisoryType: "danger",
       action: "Continue driving",
-      status: "Green signal",
       art: "driverGo",
-      overlays: [],
     },
   ],
 };
 
-const state = {
-  persona: "rider",
-  step: 0,
-  audio: true,
-  distance: 30,
-  visualDistance: null,
-  stopped: false,
-  lane: null,
-  remaining: 20,
-  hazardRemaining: 12,
-  yielded: false,
-  hazardSeen: false,
-  redCrossed: false,
-  conflictCrossed: false,
-  wrongLaneCrossed: false,
-  errors: 0,
-  summary: false,
-  feedback: null,
-  sheetExpanded: false,
-  sheetAutoOpened: false,
-  reportOpen: false,
-  reportEntryExpanded: false,
-  reportSelected: null,
-  reportSubmitted: false,
-};
+function createJourneyState(persona) {
+  return {
+    persona,
+    step: 0,
+    distance: persona === "driver" ? 40 : 30,
+    visualDistance: null,
+    stopped: false,
+    lane: null,
+    remaining: 20,
+    hazardRemaining: 12,
+    yielded: false,
+    redCrossed: false,
+    conflictCrossed: false,
+    wrongLaneCrossed: false,
+    errors: 0,
+    summary: false,
+    feedback: null,
+    sheetExpanded: false,
+    sheetAutoOpened: false,
+    reportOpen: false,
+    reportEntryExpanded: false,
+    reportSelected: null,
+    reportDraft: "",
+    reportSubmitted: false,
+  };
+}
+const state = createJourneyState("rider");
 let ticker = null;
 let feedbackTimeout = null;
 let motionFrame = null;
@@ -603,16 +558,6 @@ const art = {
   driverGo: driverSceneArt,
 };
 
-function cue(text) {
-  if (!state.audio || !("speechSynthesis" in window)) return;
-  try {
-    window.speechSynthesis.cancel();
-    const voice = new SpeechSynthesisUtterance(text);
-    voice.rate = 1.05;
-    voice.volume = 0.65;
-    window.speechSynthesis.speak(voice);
-  } catch (_) {}
-}
 function showFeedback(message, type = "info") {
   state.feedback = { message, type };
   renderFeedback();
@@ -742,29 +687,7 @@ function resetJourney(persona = state.persona) {
   clearTicker();
   clearMotion();
   clearTimeout(feedbackTimeout);
-  Object.assign(state, {
-    persona,
-    step: 0,
-    distance: persona === "driver" ? 40 : 30,
-    stopped: false,
-    lane: null,
-    remaining: 20,
-    hazardRemaining: 12,
-    yielded: false,
-    hazardSeen: false,
-    redCrossed: false,
-    conflictCrossed: false,
-    wrongLaneCrossed: false,
-    errors: 0,
-    summary: false,
-    feedback: null,
-    sheetExpanded: false,
-    sheetAutoOpened: false,
-    reportOpen: false,
-    reportEntryExpanded: false,
-    reportSelected: null,
-    reportSubmitted: false,
-  });
+  Object.assign(state, createJourneyState(persona));
   $("mode-menu").hidden = true;
   $("mode-button").setAttribute("aria-expanded", "false");
   render();
@@ -778,19 +701,10 @@ function enterStep(step) {
   state.summary = false;
   if (step === 1) {
     state.remaining = 20;
-    cue(
-      state.persona === "rider"
-        ? "Red light ahead. Stop line highlighted."
-        : "Red light ahead for the right turn. Stop line highlighted.",
-    );
   }
   if (step === 2) {
     state.hazardRemaining = 12;
     state.yielded = false;
-    state.hazardSeen = false;
-    cue(
-      "Signal changed. Check the highlighted conflict zone before proceeding.",
-    );
   }
   render();
   if (step === 2 && state.distance <= -50) {
@@ -816,7 +730,6 @@ function enterStep(step) {
             "Conflict zone clear. Check your surroundings, then proceed.",
             "success",
           );
-          cue("Conflict zone clear. Proceed when safe.");
         }
       }
     }, 1000);
@@ -861,7 +774,6 @@ function actionSecondary() {
   }
   if (state.step === 1) {
     showFeedback("The signal is red. The stop line marks the approach to the junction.", "info");
-    cue("Red signal ahead. Check the stop line.");
     return;
   }
   if (state.step === 2) {
@@ -872,7 +784,6 @@ function actionSecondary() {
         : "The crossing is clear. Check once more, then proceed.",
       "success",
     );
-    cue("Yielding at the conflict zone.");
   }
 }
 function demoMove() {
@@ -920,7 +831,6 @@ function demoMove() {
     );
   else if (warning) {
     showFeedback(warning, "danger");
-    cue(warning);
   } else if (state.step === 0)
     showFeedback(
       `${next} m to the junction. Solid lane boundaries are highlighted.`,
@@ -938,7 +848,6 @@ function demoMove() {
         clearMotion();
         state.summary = true;
         render();
-        cue("Journey complete.");
       }
     }, 720);
   }
@@ -1027,23 +936,27 @@ function render() {
   setText("view-label", item.view);
   setText("maneuver-icon", item.icon);
   setText("maneuver-title", item.title);
-  setText("footer-audio", state.audio ? "Audio on" : "Audio off");
-  $("sound-button").classList.toggle("muted", !state.audio);
-  $("sound-button").textContent = state.audio ? "◖))" : "◖×";
-  $("sound-button").setAttribute("aria-pressed", String(state.audio));
+  renderGuidance(item, driver);
+  renderScene(item, driver);
+  renderSummary(driver);
+  renderDemoControls();
+  renderReportPage();
+  renderFeedback();
+}
+function formatApproachDistance() {
+  if (state.distance > 0) return `${state.distance} m ahead`;
+  if (state.distance === 0) return "At stop line";
+  return `${Math.abs(state.distance)} m beyond`;
+}
+function renderGuidance(item, driver) {
   let distance = item.distance,
     advisory = item.advisory,
     advisoryType = item.advisoryType,
     primary = item.action,
     secondary = "";
   if (state.step === 0) {
+    distance = formatApproachDistance();
     if (driver) {
-      distance =
-        state.distance > 0
-          ? `${state.distance} m ahead`
-          : state.distance === 0
-            ? "At stop line"
-            : `${Math.abs(state.distance)} m beyond`;
       primary = "Check lane";
       secondary = "Help";
       advisory = nearStopLine()
@@ -1055,12 +968,6 @@ function render() {
             : "Check the through, right-turn, and bike lanes before the junction.";
       advisoryType = state.lane && state.lane !== "right" ? "danger" : "";
     } else {
-      distance =
-        state.distance > 0
-          ? `${state.distance} m ahead`
-          : state.distance === 0
-            ? "At stop line"
-            : `${Math.abs(state.distance)} m beyond`;
       primary = "Open AR";
       advisory = nearStopLine()
         ? riskMessage()
@@ -1130,35 +1037,21 @@ function render() {
           `<button class="lane-choice ${state.lane === key ? "selected" : ""}" data-lane="${key}" aria-pressed="${state.lane === key}">${label}</button>`,
       )
       .join("");
+}
+function renderScene(item, driver) {
   $("scene-art").innerHTML = art[item.art]();
-  const travel = Math.max(0, ((driver ? 40 : 30) - state.distance) / 10);
   $("scene-art").style.transform = "none";
-  $("scene").classList.toggle("stop-risk", nearStopLine());
-  $("scene").classList.toggle("conflict-risk", nearConflict());
+  const stopRisk = nearStopLine();
+  const conflictRisk = nearConflict();
+  $("scene").classList.toggle("stop-risk", stopRisk);
+  $("scene").classList.toggle("conflict-risk", conflictRisk);
   $("scene")
     .closest(".phone")
-    .classList.toggle("risk-active", nearStopLine() || nearConflict());
+    .classList.toggle("risk-active", stopRisk || conflictRisk);
   $("scene").classList.toggle(
     "hazard-cleared",
     state.step === 2 && state.hazardRemaining === 0,
   );
-  const overlays = item.overlays
-    .map((o, i) => {
-      let small = o.small || "";
-      if (state.step === 1 && i === 0)
-        small = `00:${String(state.remaining).padStart(2, "0")} remaining`;
-      if (state.step === 2 && i === 0)
-        small =
-          state.hazardRemaining > 0
-            ? `${state.hazardRemaining}s · crossing active`
-            : "Crossing clear";
-      const top =
-        !driver && state.step === 1 && i === 1
-          ? `${Math.min(89, 79 + travel * 5)}%`
-          : o.top;
-      return `<button type="button" class="overlay ${o.cls}" data-hint="${i}" style="top:${top};${o.left ? "left:" + o.left + ";" : ""}">${o.text}${small ? `<small>${small}</small>` : ""}</button>`;
-    })
-    .join("");
   $("scene-overlays").innerHTML = (driver
     ? driverOverlays()
     : state.step > 0
@@ -1166,8 +1059,9 @@ function render() {
       : riderMapOverlays()) + reportedNotice();
   $("back-button").disabled = state.step === 0;
   $("back-button").style.opacity = state.step === 0 ? ".35" : "1";
+}
+function renderSummary(driver) {
   $("summary").hidden = !state.summary || state.reportOpen;
-  renderDemoControls();
   if (state.summary) {
     const first = driver
       ? state.wrongLaneCrossed
@@ -1185,8 +1079,6 @@ function render() {
     $("summary").innerHTML =
         `<div class="summary-card" role="dialog" aria-modal="true" aria-labelledby="summary-title"><div class="summary-kicker">JOURNEY COMPLETE</div><h2 id="summary-title">You made it through.</h2><p>Review the feedback from this crossing.</p><div class="summary-line"><span>01</span>${first}</div><div class="summary-line"><span>02</span>${second}</div><div class="summary-line"><span>03</span>${third}</div><div class="summary-note">${state.errors ? `${state.errors} risk alert${state.errors === 1 ? "" : "s"} appeared during this run. Try again to compare.` : "No risk alerts in this run."}</div><button id="report-summary-button">Report a conflict zone</button><button id="replay-button">Replay journey</button><button id="switch-button">Try ${driver ? "scooter rider" : "car driver"} scenario</button></div>`;
   }
-  renderReportPage();
-  renderFeedback();
 }
 function renderSheet() {
   const rider = state.persona === "rider";
@@ -1283,7 +1175,6 @@ $("scene-overlays").addEventListener("click", (e) => {
   const b = e.target.closest("[data-hint]");
   if (!b) return;
   const index = Number(b.dataset.hint);
-  const item = journeys[state.persona][state.step];
   if (state.step === 0 && state.persona === "driver" && index < 3) {
     state.lane = ["left", "right", "bike"][index];
     render();
@@ -1296,7 +1187,6 @@ $("scene-overlays").addEventListener("click", (e) => {
     return;
   }
   if (state.step === 2 && index === 1) {
-    state.hazardSeen = true;
     showFeedback(
       state.hazardRemaining > 0
         ? "This red zone overlaps your route. Yield until it clears."
@@ -1327,13 +1217,6 @@ document
   .forEach((b) =>
     b.addEventListener("click", () => resetJourney(b.dataset.menuPersona)),
   );
-$("sound-button").addEventListener("click", () => {
-  state.audio = !state.audio;
-  if (!state.audio && "speechSynthesis" in window)
-    window.speechSynthesis.cancel();
-  render();
-  if (state.audio) cue("Audio guidance enabled.");
-});
 $("mode-button").addEventListener("click", () => {
   const menu = $("mode-menu");
   menu.hidden = !menu.hidden;
