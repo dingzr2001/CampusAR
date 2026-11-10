@@ -77,11 +77,17 @@ button:focus-visible{outline:3px solid #e23d52;outline-offset:2px}
 .moving-actor{position:absolute;z-index:2;pointer-events:none;width:35px;height:35px;filter:drop-shadow(0 2px 4px #1118278a)}
 .marking-label{transform:translateX(-50%);border-color:#4aa7ff;background:#eaf5ff;color:#14569f;box-shadow:0 0 0 3px #4aa7ff55,0 7px 20px #11182733;white-space:nowrap}
 .lane-label{border-color:#70bdff;background:#eff8ff;color:#14569f}
+.phone.risk-active::after{content:'';position:absolute;inset:2px;border:5px solid #f33b55;border-radius:inherit;box-shadow:inset 0 0 24px #ed2e4b99,0 0 16px #f33b5577;z-index:21;pointer-events:none;animation:risk-edge-flash 1s ease-in-out infinite}
+.overlay.signal-urgent,.overlay.stop-urgent{background:#ffe0e6;border-color:#e92746;color:#a51d36;box-shadow:0 0 0 4px #f33b5559,0 7px 20px #11182733;animation:risk-cue-pulse 1s ease-in-out infinite}
+.risk-marker{position:absolute;z-index:4;display:grid;place-items:center;width:31px;height:31px;border:3px solid #fff;border-radius:50%;background:#e92746;color:#fff;font-size:22px;font-weight:900;line-height:1;box-shadow:0 0 0 5px #e9274659,0 4px 15px #6e11289c;transform:translate(-50%,-50%);pointer-events:none;animation:risk-cue-pulse 1s ease-in-out infinite}
+@keyframes risk-edge-flash{0%,100%{opacity:.95}50%{opacity:.28}}
+@keyframes risk-cue-pulse{0%,100%{filter:brightness(1);scale:1}50%{filter:brightness(1.25);scale:1.1}}
+@media(prefers-reduced-motion:reduce){.phone.risk-active::after,.overlay.signal-urgent,.overlay.stop-urgent,.risk-marker{animation:none}}
 .moving-actor svg{width:100%;height:100%;fill:#111318;stroke:#fff;stroke-width:1.5;overflow:visible}
-.rider-actor{top:51%;animation:rider-cross 6s linear both}
 .driver-actor{left:75%;animation:driver-cross 6s linear both}
 .driver-actor svg{fill:none;stroke:#111318;stroke-width:3}
-@keyframes rider-cross{from{left:-10%}to{left:62%}}
+@keyframes traffic-cross{from{transform:translate(var(--car-from-x),var(--car-y))}to{transform:translate(var(--car-to-x),var(--car-y))}}
+.traffic-car{animation:traffic-cross 12s linear both}
 @keyframes driver-cross{from{top:42%}to{top:72%}}
 .hazard-cleared [data-conflict]{opacity:.2}
 .summary{position:absolute;inset:0;background:#111318d9;z-index:30;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -132,7 +138,7 @@ button:focus-visible{outline:3px solid #e23d52;outline-offset:2px}
 .mobile-demo-console{display:none}
 .scene-art{transform-origin:50% 22%;transition:transform .45s ease-out}
 .scene-art svg{transition:none}
-.rider-actor,.driver-actor{animation-duration:12s}
+.driver-actor{animation-duration:12s}
 
 @media(max-width:700px){
   .mobile-demo-console{display:block;position:relative;z-index:12;border-radius:0;margin:0;padding:7px 10px 8px;min-height:103px;box-shadow:0 -4px 18px #0003}
@@ -157,3 +163,15 @@ button:focus-visible{outline:3px solid #e23d52;outline-offset:2px}
   .driver-mode .mobile-demo-console .demo-location{margin:0 0 4px}
   .driver-mode .mobile-demo-console .demo-actions button{height:30px}
 }
+
+/* Rider guidance rests at the maneuver and expands by drag or tap. */
+body:not(.driver-mode) .bottom-sheet{height:252px;overflow:hidden;transition:height .24s ease}
+body:not(.driver-mode) .bottom-sheet.is-collapsed{height:110px}
+body:not(.driver-mode) .bottom-sheet.is-dragging{transition:none}
+body:not(.driver-mode) .sheet-drag-area{touch-action:none;user-select:none;cursor:grab}
+body:not(.driver-mode) .sheet-drag-area:active{cursor:grabbing}
+body:not(.driver-mode) .sheet-drag-area:focus-visible{outline:3px solid #e23d52;outline-offset:-3px;border-radius:10px}
+body:not(.driver-mode) .bottom-sheet.is-collapsed .sheet-details{visibility:hidden}
+body:not(.driver-mode) .bottom-sheet.is-dragging .sheet-details{visibility:visible}
+.driver-mode .sheet-details{display:flex;flex:1;min-height:0;flex-direction:column}
+@media(prefers-reduced-motion:reduce){body:not(.driver-mode) .bottom-sheet{transition:none}}
