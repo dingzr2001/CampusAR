@@ -662,18 +662,16 @@ function riderMapOverlays() {
   );
 }
 function riderOverlays() {
-  const signal = state.step === 1 ? "RED LIGHT" : "GREEN LIGHT";
-  const seconds = state.step === 1 ? state.remaining : state.hazardRemaining;
   const stopY = riderProject(4.8125, 0)[1];
   const stopVisible = state.distance >= 0 && stopY > 95 && stopY < 425;
   const stopTop = Math.max(12, Math.min(78, (stopY / 430) * 100 - 9));
   const laneBeyond = state.distance <= -22;
   const onCrossing = state.distance < 0 && !laneBeyond;
-  const lanePosition = onCrossing ? "center" : laneBeyond ? "left" : "right";
-  const laneStyle = onCrossing ? "top:66%;left:50%" : "top:69%";
+  const laneDepth = riderCamera().z + 1.7;
+  const laneX = laneDepth <= 0 ? 4.125 : laneDepth >= 22 ? -4.125 : 4.8125 - 8.25 * (laneDepth / 22);
+  const laneLeft = Math.max(22, Math.min(78, (riderProject(laneX, laneDepth)[0] / 360) * 100));
   const laneText = onCrossing ? "Bike crossing" : "Bike lane";
   return (
-    `<button type="button" class="overlay ${state.step === 1 ? "warn" : "green"} ${nearStopLine() ? "signal-urgent" : ""} right" data-hint="0" style="top:16%">${signal}<small>${state.step === 2 && seconds === 0 ? "Crossing clear" : String(seconds).padStart(2, "0") + " s remaining"}</small></button>` +
     (state.step === 1 && stopVisible
       ? `<button type="button" class="overlay marking-label ${nearStopLine() ? "stop-urgent" : ""}" data-hint="1" style="top:${stopTop}%;left:50%">Stop line</button>`
       : "") +
@@ -689,7 +687,7 @@ function riderOverlays() {
     (state.distance >= 0
       ? `<button type="button" class="overlay left" data-hint="3" style="top:68%">Motor lane</button>`
       : "") +
-    `<button type="button" class="overlay lane-label ${lanePosition}" data-hint="2" style="${laneStyle}">${laneText}</button>`
+    `<button type="button" class="overlay lane-label center" data-hint="2" style="top:68%;left:${laneLeft.toFixed(1)}%">${laneText}</button>`
   );
 }
 function driverOverlays() {
@@ -698,14 +696,10 @@ function driverOverlays() {
       `<button type="button" class="overlay left" data-hint="0" style="top:65%">Through lane</button><button type="button" class="overlay lane-label center" data-hint="1" style="top:64%;left:50%">Right-turn lane</button><button type="button" class="overlay right" data-hint="2" style="top:73%">Bike lane</button>` +
       (nearStopLine() ? driverRiskMarker("stop", 2.2, 0, 80, -10) : "")
     );
-  const signal = state.step === 1 ? "RED LIGHT" : "GREEN LIGHT";
-  const seconds = state.step === 1 ? state.remaining : state.hazardRemaining;
-  const signalLabel = `<button type="button" class="overlay ${state.step === 1 ? "warn" : "green"} ${nearStopLine() ? "signal-urgent" : ""} left" data-hint="0" style="top:16%">${signal}<small>${state.step === 2 && seconds === 0 ? "Crossing clear" : String(seconds).padStart(2, "0") + " s remaining"}</small></button>`;
   if (state.step === 1) {
     const y = driverPoint(driverLocal(2.2, 0))[1];
     const top = Math.max(29, Math.min(77, (y / 350) * 100 - 9));
     return (
-      signalLabel +
       (state.distance >= 0
         ? `<button type="button" class="overlay marking-label ${nearStopLine() ? "stop-urgent" : ""}" data-hint="1" style="top:${top}%;left:50%">Stop line</button>`
         : "") +
@@ -714,7 +708,6 @@ function driverOverlays() {
     );
   }
   return (
-    signalLabel +
     (nearConflict()
       ? `<button type="button" class="overlay danger right" data-hint="1" style="top:52%">Conflict zone<small>Yield at crosswalk</small></button>`
       : "") +
@@ -844,10 +837,6 @@ function actionPrimary() {
         : "Select the right-turn lane before the junction.",
       state.lane === "right" ? "success" : "info",
     );
-    return;
-  }
-  if (state.step === 1) {
-    showFeedback(riskMessage() || "Red signal ahead. Check the highlighted stop line.", "info");
     return;
   }
   if (state.step === 2) {
@@ -1078,8 +1067,8 @@ function render() {
         : "Open AR while moving to see the labeled lanes and solid boundaries ahead.";
     }
   } else if (state.step === 1) {
-    distance = `00:${String(state.remaining).padStart(2, "0")} · ${state.distance > 0 ? state.distance + " m to line" : state.distance === 0 ? "at line" : "past line"}`;
-    primary = "Check signal";
+    distance = state.distance > 0 ? `${state.distance} m to line` : state.distance === 0 ? "At stop line" : "Past stop line";
+    primary = "";
     secondary = driver ? "Why wait?" : "";
     advisory = nearStopLine()
       ? riskMessage()
@@ -1121,10 +1110,13 @@ function render() {
   setText("distance", distance);
   setText("advisory-text", advisory);
   $("advisory").className = `advisory ${advisoryType}`;
-  $("primary-button").innerHTML = `${primary}<span>↗</span>`;
+  const primaryButton = $("primary-button");
+  primaryButton.hidden = !primary;
+  primaryButton.innerHTML = primary ? `${primary}<span>↗</span>` : "";
   const secondaryButton = $("secondary-button");
   secondaryButton.hidden = !secondary;
   secondaryButton.textContent = secondary;
+  $("sheet-actions").hidden = !primary && !secondary;
   const laneRow = $("choice-row");
   laneRow.hidden = !(driver && state.step === 0);
   if (!laneRow.hidden)
