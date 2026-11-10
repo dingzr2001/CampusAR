@@ -223,6 +223,6 @@ body:not(.driver-mode) .bottom-sheet.is-dragging .sheet-details{visibility:visib
 .sheet-footer{justify-content:flex-end}
 .maneuver-copy{min-width:0}
 .maneuver-copy h3{margin-bottom:5px}
-.distance{display:block;color:#286ec5;font-size:16px;font-weight:800;line-height:1.2}
-.driver-mode .distance{color:#9fc8ff;font-size:15px;margin-top:0}
+.distance{display:block;color:#14569f;font-size:24px;font-weight:900;line-height:1.1}
+.driver-mode .distance{color:#9fc8ff;font-size:20px;margin-top:0}
 .primary-button[hidden],.sheet-actions[hidden]{display:none}
